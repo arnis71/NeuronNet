@@ -16,7 +16,7 @@ public class FeedForwardNN extends NeuronNet {
 
     protected FeedForwardNN() {
         setEpoch(0);
-        setMaxEpoch(50000);
+        setMaxEpoch(5000);
         setCurrentTrainingSet(0);
         neuronLayers = new ArrayList<>();
     }
@@ -29,7 +29,6 @@ public class FeedForwardNN extends NeuronNet {
     @Override
     public void startWithData(TrainingSet trainingSet) {
         setTrainingSet(trainingSet);
-        setMode(NeuronNet.WORKING_MODE);
         getMode().start(this);
     }
 
@@ -39,11 +38,8 @@ public class FeedForwardNN extends NeuronNet {
             Log.d("happy", "FOR INPUT: " + neuronLayers.get(0).get(i).getInputValue());
         }
         for (int i = 0; i < neuronLayers.get(neuronLayers.size()-1).size(); i++) {
-            Log.d("happy","ACTUAL_OUTPUT: "+ neuronLayers.get(neuronLayers.size()-1).get(i).getOutputValue());
             Log.d("happy","IDEAL_OUTPUT: "+ ((OutputNeuron)neuronLayers.get(neuronLayers.size()-1).get(i)).getIdealOutputValue());
-//            Log.d("happy", "ERROR: "+calculateError(neuronLayers.get(neuronLayers.size()-1).size(),
-//                    ((OutputNeuron)neuronLayers.get(neuronLayers.size()-1).get(i)).getIdealOutputValue(),
-//                    neuronLayers.get(neuronLayers.size()-1).get(i).getOutputValue()));
+            Log.d("happy","ACTUAL_OUTPUT: "+ String.format("%.4f",neuronLayers.get(neuronLayers.size()-1).get(i).getOutputValue()));
         }
         Log.d("happy", "-----------------------------------");
     }
@@ -68,15 +64,6 @@ public class FeedForwardNN extends NeuronNet {
             ((OutputNeuron)neuronLayers.get(neuronLayers.size()-1).get(i)).setIdealOutputValue(outputs[i]);
         }
     }
-
-//    @Override
-//    public void calculateNodes() {
-//        for (int i = neuronLayers.size()-1; i > 0; i--) {
-//            for (int j = 0; j <= neuronLayers.get(i).size()-1; j++) {
-//                neuronLayers.get(i).get(j).calculateNodeDelta();
-//            }
-//        }
-//    }
 
     @Override
     protected void calculateOutputs(ArrayList<Neural> neurals) {
@@ -107,7 +94,7 @@ public class FeedForwardNN extends NeuronNet {
     }
 
     @Override
-    public void calculateGradients(ArrayList<Neural> neurals) {
+    public void calculateGradientsUpdateWeights(ArrayList<Neural> neurals) {
         for (Neural neuron:neurals) {
             ArrayList<Synapse> synapses = neuron.getLinks();
             for (Synapse synapse : synapses) {

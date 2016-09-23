@@ -8,13 +8,14 @@ import java.util.Random;
 public class Synapse {
     private static Random rnd = new Random();
 
+
     private double weight;
     private double previousWeightChange=0;
     private double gradient;
     private Neural linkedNeuron;
 
 
-    public Synapse(Neural linkedNeuron) {
+    Synapse(Neural linkedNeuron) {
         this.linkedNeuron = linkedNeuron;
         weight = rnd.nextDouble();
     }
@@ -29,6 +30,9 @@ public class Synapse {
 
     public void setPreviousWeightChange(double previousWeightChange) {
         this.previousWeightChange = previousWeightChange;
+    }
+    public void setWeight(double weight) {
+        this.weight = weight;
     }
 
     public double getWeight() {

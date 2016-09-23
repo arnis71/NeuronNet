@@ -1,5 +1,7 @@
 package com.arnis.neuronnet.Net;
 
+import android.util.Log;
+
 import com.arnis.neuronnet.Neurons.ContextNeurons;
 import com.arnis.neuronnet.Neurons.Neural;
 import com.arnis.neuronnet.Neurons.OutputNeuron;
@@ -29,6 +31,7 @@ public abstract class NeuronNet {
     private int epoch;
     private int maxEpoch;
     private Error error;
+    protected double err=0;
     protected ArrayList<ArrayList<Neural>> neuronLayers;
 
 
@@ -64,8 +67,14 @@ public abstract class NeuronNet {
         training.train();
     }
 
-    protected double calculateError(int predictions,double idealOut,double actualOut){
-        return error.calculate(predictions,idealOut,actualOut);
+    protected void addSquaredError(double[] idealOut,double[] actualOut){
+        err +=  ((Error.MeanSquaredError)error).squareError(idealOut,actualOut);
+    }
+    protected void calculateError(boolean print){
+        err =  error.calculate(trainingSet.getSetEntries(),err);
+        if (print)
+            Log.d("happy", "ERROR: " + String.format("%.2f",this.err*100)+"%");
+        err=0;
     }
 
     protected void calculateOutputs(ArrayList<Neural> neurals){
@@ -76,7 +85,7 @@ public abstract class NeuronNet {
         throw new UnsupportedOperationException("Can not perform calculation");
     }
 
-    protected void calculateGradients(ArrayList<Neural> neurals){
+    protected void calculateGradientsUpdateWeights(ArrayList<Neural> neurals){
         throw new UnsupportedOperationException("Can not perform calculation");
     }
     protected void calculateInOut(){

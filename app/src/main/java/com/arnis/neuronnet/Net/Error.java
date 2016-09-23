@@ -6,28 +6,29 @@ import android.content.SharedPreferences;
  * Created by arnis on 05.09.2016.
  */
 public interface Error {
-    double calculate(int predictions,double idealOut,double actualOut);
+    double calculate(int outputs,double totalError);
 
     class MeanSquaredError implements Error{
 
         @Override
-        public double calculate(int predictions,double idealOut,double actualOut) {
-            double sum = 0;
-            for (int i = 0; i < predictions; i++) {
-                sum+=Math.pow(idealOut-actualOut,2);
+        public double calculate(int outputs,double totalError) {
+            return totalError/outputs;
+        }
+
+        public double squareError(double[] ideal,double[] actual){
+            double sum=0;
+            for (int i = 0; i < actual.length; i++) {
+                sum+=Math.pow(ideal[i]-actual[i],2);
             }
-            return sum/predictions;
+            return sum/actual.length;
         }
     }
 
     class ArctanError implements Error{
+
         @Override
-        public double calculate(int predictions,double idealOut,double actualOut) {
-            double sum = 0;
-            for (int i = 0; i < predictions; i++) {
-                sum+=Math.pow(Math.atan(idealOut-actualOut),2);
-            }
-            return sum/predictions;
+        public double calculate(int outputs,double totalError) {
+            return 0;
         }
     }
 }

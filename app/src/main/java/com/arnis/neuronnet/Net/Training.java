@@ -1,18 +1,11 @@
 package com.arnis.neuronnet.Net;
 
-import android.util.Log;
-
-import com.arnis.neuronnet.Neurons.Neural;
-import com.arnis.neuronnet.Neurons.Synapse;
-
-import java.util.ArrayList;
-
 /**
  * Created by arnis on 04.09.2016.
  */
 public interface Training {
-    public final double learningRate = 0.2;
-    public final double momentum = 0.3;
+    public final double learningRate = 0.9;
+    public final double momentum = 0.7;
     void train();
 
     class BackPropagation implements Training{
@@ -29,41 +22,20 @@ public interface Training {
                 for (int i = 0; i < net.getTrainingSet().getSetEntries(); i++) {
                     net.loadValuesFromSet(i);
                     net.calculateInOut();
-//                    net.getInfo();
+                    net.addSquaredError(net.getTrainingSet().getEntry(i).getDesiredOutput(),net.getOutput());
+                    net.getInfo();
                     backPropagate();
                 }
+                net.calculateError(true);
             }
         }
         private void backPropagate() {
             for (int i = net.neuronLayers.size()-1; i > 0; i--) {
                 for (int j = 0; j <= net.neuronLayers.get(i).size()-1; j++) {
                     net.neuronLayers.get(i).get(j).calculateNodeDelta();
-//                    if (i<=net.neuronLayers.size()-2){
-//                        Neural neuron = net.neuronLayers.get(i).get(j);
-//                        ArrayList<Synapse> synapses = neuron.getLinks();
-//                        for (Synapse synapse:synapses){
-//                            synapse.calculateGradient(neuron);
-//                            synapse.setPreviousWeightChange((learningRate*synapse.getGradient()+(synapse.getPreviousWeightChange()*momentum)));
-//                            synapse.updateWeight();
-//                        }
-//                    }
                 }
-                net.calculateGradients(net.neuronLayers.get(i-1));// rename does weight adjust too
+                net.calculateGradientsUpdateWeights(net.neuronLayers.get(i-1));// rename does weight adjust too
             }
-//
-//
-//
-//
-//            for (int i = 0; i < net.neuronLayers.size()-1; i++) {
-//                for (int j = 0; j < net.neuronLayers.get(i).size(); j++) {
-//                    Neural neuron = net.neuronLayers.get(i).get(j);
-//                    ArrayList<Synapse> synapses = neuron.getLinks();
-//                    for (Synapse synapse:synapses){
-//                        synapse.setPreviousWeightChange((learningRate*synapse.getGradient()+(synapse.getPreviousWeightChange()*momentum)));
-//                        synapse.updateWeight();
-//                    }
-//                }
-//            }
         }
     }
 }
