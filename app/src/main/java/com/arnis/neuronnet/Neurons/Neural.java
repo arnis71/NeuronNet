@@ -17,6 +17,7 @@ public abstract class Neural {
     public static void setActivationFunction(String function) {
         switch (function){
             case ActivationFunction.SIGMOID: activationFunc = new ActivationFunction.Sigmoid();break;
+            case ActivationFunction.HYPERBOLIC_TANGENT: activationFunc = new ActivationFunction.HyperTangent();break;
                 default: activationFunc =null;
         }
     }
@@ -41,9 +42,17 @@ public abstract class Neural {
     }
 
     public void linkWithLayer(ArrayList<Neural> layer){
+        boolean linked=false;
         for (Neural neuron: layer) {
             Synapse synapse = new Synapse(this);
             neuron.links.add(synapse);
+            if (neuron instanceof ContextNeuron&&!linked&&!((ContextNeuron)neuron).isLinked()){
+                linked=true;
+                ((ContextNeuron) neuron).setLinked(linked);
+                Synapse synapseRev = new Synapse(neuron);
+                synapseRev.setNoWeight();
+                this.getLinks().add(synapseRev);
+            }
 //            calculateIn(neuron,synapse);
         }
     }

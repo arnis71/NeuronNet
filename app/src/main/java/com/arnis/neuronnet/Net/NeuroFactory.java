@@ -1,6 +1,7 @@
 package com.arnis.neuronnet.Net;
 
 import com.arnis.neuronnet.Neurons.BiasNeuron;
+import com.arnis.neuronnet.Neurons.ContextNeuron;
 import com.arnis.neuronnet.Neurons.HiddenNeuron;
 import com.arnis.neuronnet.Neurons.InputNeuron;
 import com.arnis.neuronnet.Neurons.Neural;
@@ -22,7 +23,7 @@ public class NeuroFactory {
             case HIDDEN_NEURON: return new HiddenNeuron();
             case OUTPUT_NEURON: return new OutputNeuron();
             case BIAS_NEURON:return new BiasNeuron();
-            case CONTEXT_NEURON:return null;
+            case CONTEXT_NEURON:return new ContextNeuron();
             default: throw new IllegalArgumentException("No neuron of type "+type);
         }
     }

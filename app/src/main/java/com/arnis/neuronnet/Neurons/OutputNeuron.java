@@ -9,7 +9,7 @@ import java.util.ArrayList;
  */
 public class OutputNeuron extends Neural {
 
-    private double idealOutputValue=-1;
+    private double idealOutputValue=-100;
 
     public double getIdealOutputValue() {
         return idealOutputValue;

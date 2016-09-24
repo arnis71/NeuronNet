@@ -29,6 +29,7 @@ public interface Mode {
             for (int i = 0; i < neuronNet.getTrainingSet().getSetEntries(); i++) {
                 neuronNet.loadValuesFromSet(i);
                 neuronNet.calculateInOut();
+                neuronNet.addResults(neuronNet.getOutput(),neuronNet.getTrainingSet().getEntry(i).getDescription());
                 neuronNet.getInfo();
             }
         }

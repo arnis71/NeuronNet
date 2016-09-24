@@ -6,6 +6,7 @@ package com.arnis.neuronnet.Net;
 public interface ActivationFunction {
 
     public static final String SIGMOID = "sigmoid";
+    public static final String HYPERBOLIC_TANGENT = "tangent";
 
     double calculate(double x);
     double calculateDerivative(double x);
@@ -20,6 +21,19 @@ public interface ActivationFunction {
         @Override
         public double calculateDerivative(double out) {
             return out*(1-out);
+        }
+    }
+
+    class HyperTangent implements ActivationFunction{
+
+        @Override
+        public double calculate(double x) {
+            return Math.tanh(x);
+        }
+
+        @Override
+        public double calculateDerivative(double out) {
+            return 1-Math.pow(out,2);
         }
     }
 }

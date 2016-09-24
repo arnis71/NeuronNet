@@ -24,6 +24,21 @@ public interface Error {
         }
     }
 
+    class SimpleError implements Error{
+
+        @Override
+        public double calculate(int outputs, double totalError) {
+            return totalError;
+        }
+        public double absError(double[] ideal,double[] actual){
+            double sum=0;
+            for (int i = 0; i < actual.length; i++) {
+                sum+=Math.abs(ideal[i]-actual[i]);
+            }
+            return sum/actual.length;
+        }
+    }
+
     class ArctanError implements Error{
 
         @Override
