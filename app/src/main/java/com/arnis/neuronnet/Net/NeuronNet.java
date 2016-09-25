@@ -1,6 +1,7 @@
 package com.arnis.neuronnet.Net;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.arnis.neuronnet.Neurons.InputNeuron;
@@ -9,10 +10,10 @@ import com.arnis.neuronnet.Neurons.OutputNeuron;
 import com.arnis.neuronnet.Neurons.Synapse;
 import com.arnis.neuronnet.Other.NetDimen;
 import com.arnis.neuronnet.Other.OnCompleteListener;
+import com.arnis.neuronnet.Other.Prefs;
 import com.arnis.neuronnet.Other.TrainingSet;
 import com.arnis.neuronnet.Other.ValueChangeListener;
 import com.arnis.neuronnet.Retrofit.Stock;
-import com.arnis.neuronnet.Settings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,7 @@ public abstract class NeuronNet {
     private static double learningRate = 0.0001;
     private static double momentum = 0.9;
 
+    private String name;
     private Brains brains;
     private Mode mode;
     private Training training;
@@ -45,8 +47,9 @@ public abstract class NeuronNet {
     private Thread neuralThread;
     private int currentTrainingSet;
     private int epoch;
-    private int maxEpoch;
-    private double err=0;
+    private int iteration;
+    private int maxIterations;
+    private double err;
     ArrayList<ArrayList<Neural>> neuronLayers;
     Map<String,double[]> results;
 
@@ -56,6 +59,11 @@ public abstract class NeuronNet {
         epochListener = listener;
     }
 
+    public void setName(String name){
+        if (name.equals("no brains"))
+            this.name = "default";
+        else this.name = name;
+    }
 
     public static NeuronNet getNN(String type){
         switch (type){
@@ -89,23 +97,40 @@ public abstract class NeuronNet {
         }
     }
 
-    public static NeuronNet requestStockSolvingNN(Context context){
+    public void join(){
+        try {
+            neuralThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
-        int predictionWindow = 4;
-        int predictPositions = 2;
+    public static NeuronNet requestStockSolvingNN(Context context, Prefs prefs,int predictionWindow,int predictPositions){
+
+//        int predictionWindow = 4;
+//        int predictPositions = 2;
         int[] hiddenNeurons = new int[]{3};
 
         NetDimen dimensions = new NetDimen(predictionWindow,predictPositions,hiddenNeurons);
 
-        NeuronNet.Builder builder = new NeuronNet.Builder(NeuronNet.getNN(Settings.NN_TYPE));
+        NeuronNet.Builder builder = new NeuronNet.Builder(NeuronNet.getNN(prefs.getType()));
         builder.setDimensions(dimensions)
                 .setBias(true)
-                .setErrorCalculation(Settings.ERROR_CALC)
+                .setErrorCalculation(prefs.getError())
                 .setActivationFunction(ActivationFunction.HYPERBOLIC_TANGENT)
                 .addBrains(context);
 
         NeuronNet net = builder.build();
-        net.setMaxEpoch(Settings.MAX_EPOCH);
+        net.setMaxIterations(prefs.getEpoch());
+
+        net.epoch = context.getSharedPreferences(prefs.getBrainName()+"_info",Context.MODE_PRIVATE).getInt("epoch",0);
+        net.err = Double.parseDouble(context.getSharedPreferences(prefs.getBrainName()+"_info",Context.MODE_PRIVATE).getString("error","0"));
+
+        if (prefs.isTrain())
+            net.setMode(TRAINING_MODE);
+        else net.setMode(WORKING_MODE);
+
+        net.loadBrains(prefs.getBrainName());
 
         return net;
     }
@@ -114,26 +139,28 @@ public abstract class NeuronNet {
         TrainingSet trainingSet = new TrainingSet();
 
         if (isTraining())
-            trainingSet.addTrainStocks(data,neuronLayers.get(0).size(),neuronLayers.get(neuronLayers.size()-1).size());
-        else trainingSet.addWorkStocks(data,neuronLayers.get(0).size());
+            trainingSet.addTrainStocks(data,neuronLayers.get(0).size()-1,neuronLayers.get(neuronLayers.size()-1).size());
+        else trainingSet.addWorkStocks(data,neuronLayers.get(0).size()-1);
 
         setTrainingSet(trainingSet);
     }
 
-    public void saveBrains(){
-        brains.saveBrains(this);
+    public void store(String name,Context context){
+        SharedPreferences.Editor editor = context.getSharedPreferences(name+"_info",Context.MODE_PRIVATE).edit();
+        editor.putInt("epoch",getEpoch());
+        editor.putString("error",Double.toString(getTotalError())).apply();
+        brains.saveBrains(name,this);
     }
-    public void loadBrains(){
-        if (Settings.USE_BRAINS) {
-            if (brains.checkCompat(this)) {
+
+    private void loadBrains(String name){
+            if (brains.checkCompat(name,this)) {
                 Log.d("happy", "brains fit");
                 try {
-                    brains.loadBrains(this);
+                    brains.loadBrains(name,this);
                 } catch (IndexOutOfBoundsException e) {
                     Log.d("happy", "brains damaged");
                 }
             } else Log.d("happy", "brains do not fit");
-        }
     }
 
     private void setTrainingMode(String training){
@@ -163,7 +190,7 @@ public abstract class NeuronNet {
         if (print)
             Log.d("happy", "ERROR: " + String.format("%.6f",this.err*100)+"%");
     }
-    public void resetErr(){
+    void resetErr(){
         err=0;
     }
     public double getTotalError(){
@@ -220,24 +247,24 @@ public abstract class NeuronNet {
             ((OutputNeuron)neuronLayers.get(neuronLayers.size()-1).get(i)).setIdealOutputValue(outputs[i]);
         }
     }
-    public NeuronNet start(){
+    public NeuronNet startWithListener(OnCompleteListener listener){
         final NeuronNet copy = this;
-        neuralThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                getMode().start(copy);
-                mOnCompleteListener.onComplete();
-            }
-        });
-        neuralThread.start();
+        mOnCompleteListener = listener;
+        if (getTrainingSet().getSetEntries()>0) {
+            neuralThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    getMode().start(copy);
+                    brains.saveBrains(name, copy);
+                    mOnCompleteListener.onComplete();
+                }
+            });
+            neuralThread.start();
+        } else mOnCompleteListener.onComplete();
         return this;
     };
 
     private OnCompleteListener mOnCompleteListener;
-    public void addOnCompleteListener(OnCompleteListener listener){
-        mOnCompleteListener = listener;
-
-    }
 
     void getInfo(){
         for (int i = 0; i < neuronLayers.get(0).size()-1; i++) {
@@ -260,28 +287,32 @@ public abstract class NeuronNet {
         return epoch;
     }
 
-    void setEpoch(int epoch) {
-        this.epoch = epoch;
+    void setIteration(int iteration) {
+        this.iteration = iteration;
         if (epochListener!=null)
-            epochListener.onValueChange(epoch);
+            epochListener.onValueChange(iteration);
     }
 
-    void incEpoch() {
+    void iterate() {
+        iteration++;
         this.epoch++;
-        epochListener.onValueChange(epoch);
+        epochListener.onValueChange(iteration);
     }
 
-    void resetEpoch(){
-        epoch=0;
+    void resetIterations(){
+        iteration=0;
     }
 
 
-    public int getMaxEpoch() {
-        return maxEpoch;
+    public int getMaxIterations() {
+        return maxIterations;
     }
 
-    void setMaxEpoch(int maxEpoch) {
-        this.maxEpoch = maxEpoch;
+    void setMaxIterations(int maxIterations) {
+        this.maxIterations = maxIterations;
+    }
+    int getIteration(){
+        return iteration;
     }
 
     public int getCurrentTrainingSet() {
@@ -313,7 +344,7 @@ public abstract class NeuronNet {
         return mode;
     }
 
-    public void setMode(String type) {
+    private void setMode(String type) {
         switch (type){
             case TRAINING_MODE: mode = new Mode.Learning(); this.setTrainingMode(BACKPROPAGATION_TRAINING);break;
             case VALIDATION_MODE: mode = new Mode.Validation();break;
@@ -378,7 +409,6 @@ public abstract class NeuronNet {
             ArrayList<Neural> inputLayer = net.neuronLayers.get(0);
             for (int i = 0; i < dimensions.getInputNeurons(); i++){
                 inputLayer.add(NeuroFactory.getNeuron(NeuroFactory.INPUT_NEURON));
-//                inputLayer.get(i).setInputValue(net.getTrainingSet().getEntry(0).getInputValue(i));
             }
             addBiasNeuron(0);
             addContextNeurons(inputLayer,dimensions.getHiddenLayersNeuron(0));
@@ -411,8 +441,6 @@ public abstract class NeuronNet {
             for (int i = 0; i < dimensions.getOutputNeurons(); i++){
                 outputLayer.add(NeuroFactory.getNeuron(NeuroFactory.OUTPUT_NEURON));
                 outputLayer.get(i).linkWithLayer(net.neuronLayers.get(dimensions.getTotalLayers()-2));
-//                if (net.isTraining())
-//                    ((OutputNeuron)outputLayer.get(i)).setIdealOutputValue(net.getTrainingSet().getEntry(0).getOutputValue(i));
             }
         }
 

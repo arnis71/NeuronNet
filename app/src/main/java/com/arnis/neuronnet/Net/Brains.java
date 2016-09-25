@@ -17,15 +17,22 @@ public class Brains {
     private SharedPreferences brainsStorage;
     private SharedPreferences dimenStorage;
     private int sch = 1;
+    private Context context;
 
-    public Brains(Context context) {
-        brainsStorage = context.getSharedPreferences("brains",Context.MODE_PRIVATE);
-        dimenStorage = context.getSharedPreferences("dimen",Context.MODE_PRIVATE);
+    Brains(Context context) {
+//        brainsStorage = context.getSharedPreferences("brains",Context.MODE_PRIVATE);
+//        dimenStorage = context.getSharedPreferences("dimen",Context.MODE_PRIVATE);
+        this.context = context;
         matrices = new ArrayList<>();
     }
 
     // TODO: 23/09/2016 take biases into consideration
-    public boolean checkCompat(NeuronNet net){
+    public boolean checkCompat(String name,NeuronNet net){
+        if (name.equals("no brains"))
+            return false;
+
+        dimenStorage = context.getSharedPreferences(name+"_storage",Context.MODE_PRIVATE);
+
         if (net.neuronLayers.size()!=dimenStorage.getInt("total",0))
             return false;
         if (net.neuronLayers.get(0).size()!=dimenStorage.getInt("input",0))
@@ -40,19 +47,23 @@ public class Brains {
         return true;
     }
 
-    protected void saveBrains(NeuronNet neuronNet){
-        brainsStorage.edit().clear().apply();
-        for (int i = 0; i < neuronNet.neuronLayers.size()-1; i++) {
-            for (int j = 0; j < neuronNet.neuronLayers.get(i).size(); j++) {
-                matrices.add(getWeights(neuronNet.neuronLayers.get(i).get(j)));
+    protected void saveBrains(String name,NeuronNet neuronNet){
+        if (!name.equals("default")||!name.equals("no brains")) {
+            brainsStorage = context.getSharedPreferences(name, Context.MODE_PRIVATE);
+            brainsStorage.edit().clear().apply();
+            for (int i = 0; i < neuronNet.neuronLayers.size() - 1; i++) {
+                for (int j = 0; j < neuronNet.neuronLayers.get(i).size(); j++) {
+                    matrices.add(getWeights(neuronNet.neuronLayers.get(i).get(j)));
+                }
             }
-        }
 
-        saveDimens(neuronNet);
-        sch = 1;
+            saveDimens(name, neuronNet);
+            sch = 1;
+        }
     }
 
-    private void saveDimens(NeuronNet neuronNet) {
+    private void saveDimens(String name,NeuronNet neuronNet) {
+        dimenStorage = context.getSharedPreferences(name+"_storage",Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = dimenStorage.edit().clear();
         editor.putInt("total",neuronNet.neuronLayers.size());
         editor.putInt("input",neuronNet.neuronLayers.get(0).size());
@@ -63,7 +74,8 @@ public class Brains {
         editor.apply();
     }
 
-    protected void loadBrains(NeuronNet neuronNet){
+    protected void loadBrains(String name,NeuronNet neuronNet){
+        brainsStorage = context.getSharedPreferences(name,Context.MODE_PRIVATE);
         if (matrices.size()==0) {
             matrices.add(new ArrayList<Double>());
             int i=0;

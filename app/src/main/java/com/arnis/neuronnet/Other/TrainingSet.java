@@ -47,19 +47,22 @@ public class TrainingSet {
             percentage.add(res);
         }
 
-        for (int i = 0; i <= percentage.size() - (predictWindow+prediction); i++) {
-            double[] window = new double[predictWindow];
-            double[] predict = new double[prediction];
-            int j;
-            for (j = 0; j < predictWindow; j++) {
-                window[j] = percentage.get(i+j);
+        if (predictWindow+prediction<=percentage.size()) {
+
+            for (int i = 0; i <= percentage.size() - (predictWindow + prediction); i++) {
+                double[] window = new double[predictWindow];
+                double[] predict = new double[prediction];
+                int j;
+                for (j = 0; j < predictWindow; j++) {
+                    window[j] = percentage.get(i + j);
+                }
+                int k = 0;
+                for (; j < prediction + predictWindow; j++) {
+                    predict[k++] = percentage.get(i + j);
+                }
+                addEntry(new Set(window, predict));
             }
-            int k=0;
-            for (; j < prediction+predictWindow; j++) {
-                predict[k++] = percentage.get(i+j);
-            }
-            addEntry(new Set(window,predict));
-        }
+        } else return;
 
     }
     public void addWorkStocks(List<Stock> stocks,int predictWindow){

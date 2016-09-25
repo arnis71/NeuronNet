@@ -17,8 +17,9 @@ public interface Training {
 
         @Override
         public void train() {
-            for (net.getEpoch(); net.getEpoch() < net.getMaxEpoch(); net.incEpoch()) {
-                Log.d("happy", "epoch "+net.getEpoch()+" out of "+net.getMaxEpoch());
+            net.resetErr();
+            for (net.getIteration(); net.getIteration() < net.getMaxIterations(); net.iterate()) {
+                Log.d("happy", "epoch "+net.getIteration()+" out of "+net.getMaxIterations() + " total epoch "+ net.getEpoch());
                 for (int i = 0; i < net.getTrainingSet().getSetEntries(); i++) {
                     net.loadValuesFromSet(i);
                     net.calculateInOut();
@@ -27,10 +28,10 @@ public interface Training {
                     backPropagate();
                 }
                 net.calculateError(true);
-                if (net.getEpoch()!=net.getMaxEpoch()-1)
+                if (net.getIteration()!=net.getMaxIterations()-1)
                     net.resetErr();
             }
-            net.resetEpoch();
+            net.resetIterations();
         }
         private void backPropagate() {
             for (int i = net.neuronLayers.size()-1; i > 0; i--) {

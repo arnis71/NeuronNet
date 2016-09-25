@@ -13,10 +13,22 @@
     android:orientation="vertical">
 
     <CheckBox
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="train"
+        android:id="@+id/train_nn"/>
+    <Button
         android:id="@+id/load_brains"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="load brains"/>
+    <EditText
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/stocks"
+        android:hint="stock type"
+        android:inputType="textCapCharacters"/>
     <Spinner
         android:id="@+id/error_calc"
         android:layout_width="wrap_content"
@@ -29,30 +41,19 @@
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:id="@+id/max_epoch"
-        android:hint="max epoch"/>
+        android:hint="iterations"
+        android:inputType="number"/>
     <EditText
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:id="@+id/momentum"
-        android:hint="momentum"/>
+        android:hint="momentum"
+        android:inputType="number"/>
     <EditText
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:id="@+id/learning_rate"
-        android:hint="learning rate"/>
-    <EditText
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:id="@+id/prediction_window"
-        android:hint="prediction window"/>
-    <EditText
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:id="@+id/predict"
-        android:hint="predict"/>
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="apply"/>
+        android:hint="learning rate"
+        android:inputType="number"/>
 
 </LinearLayout>

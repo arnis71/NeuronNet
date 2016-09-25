@@ -1,7 +1,5 @@
 package com.arnis.neuronnet.Net;
 
-import com.arnis.neuronnet.Settings;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -10,8 +8,7 @@ import java.util.HashMap;
  */
 public class ElmanNN extends NeuronNet {
         public ElmanNN() {
-            setEpoch(0);
-            setMaxEpoch(Settings.MAX_EPOCH);
+            setIteration(0);
             setCurrentTrainingSet(0);
             neuronLayers = new ArrayList<>();
             results = new HashMap<>();
