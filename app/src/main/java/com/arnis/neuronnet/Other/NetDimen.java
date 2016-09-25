@@ -5,12 +5,9 @@ package com.arnis.neuronnet.Other;
  */
 public class NetDimen {
     public int getTotalLayers() {
-        return totalLayers;
+        return 2+hiddenLayersNeurons.length;
     }
 
-    public void setTotalLayers(int totalLayers) {
-        this.totalLayers = totalLayers;
-    }
 
     public int getInputNeurons() {
         return inputNeurons;
@@ -32,13 +29,11 @@ public class NetDimen {
         return hiddenLayersNeurons[index];
     }
 
-    private int totalLayers;
     private int inputNeurons;
     private int outputNeurons;
     private int[] hiddenLayersNeurons;
 
-    public NetDimen(int totalLayers, int inputNeurons, int outputNeurons, int[] hiddenLayersNeurons) {
-        this.totalLayers = totalLayers;
+    public NetDimen(int inputNeurons, int outputNeurons, int[] hiddenLayersNeurons) {
         this.inputNeurons = inputNeurons;
         this.outputNeurons = outputNeurons;
         this.hiddenLayersNeurons = hiddenLayersNeurons;

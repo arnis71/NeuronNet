@@ -7,8 +7,4 @@ public class JordanNN extends NeuronNet {
     public JordanNN() {
     }
 
-    @Override
-    public void start() {
-
-    }
 }

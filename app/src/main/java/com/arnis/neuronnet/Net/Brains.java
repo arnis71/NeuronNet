@@ -40,7 +40,7 @@ public class Brains {
         return true;
     }
 
-    public void saveBrains(NeuronNet neuronNet){
+    protected void saveBrains(NeuronNet neuronNet){
         brainsStorage.edit().clear().apply();
         for (int i = 0; i < neuronNet.neuronLayers.size()-1; i++) {
             for (int j = 0; j < neuronNet.neuronLayers.get(i).size(); j++) {
@@ -63,7 +63,7 @@ public class Brains {
         editor.apply();
     }
 
-    public void loadBrains(NeuronNet neuronNet){
+    protected void loadBrains(NeuronNet neuronNet){
         if (matrices.size()==0) {
             matrices.add(new ArrayList<Double>());
             int i=0;

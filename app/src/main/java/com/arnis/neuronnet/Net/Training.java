@@ -6,8 +6,6 @@ import android.util.Log;
  * Created by arnis on 04.09.2016.
  */
 public interface Training {
-    public final double learningRate = 0.0001;
-    public final double momentum = 0.9;
     void train();
 
     class BackPropagation implements Training{
@@ -29,7 +27,10 @@ public interface Training {
                     backPropagate();
                 }
                 net.calculateError(true);
+                if (net.getEpoch()!=net.getMaxEpoch()-1)
+                    net.resetErr();
             }
+            net.resetEpoch();
         }
         private void backPropagate() {
             for (int i = net.neuronLayers.size()-1; i > 0; i--) {

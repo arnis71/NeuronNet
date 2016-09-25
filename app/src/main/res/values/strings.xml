@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">NeuronNet</string>
+    <string-array name="types">
+        <item>feedforward</item>
+        <item>elman</item>
+        <item>jordan</item>
+    </string-array>
+    <string-array name="error">
+        <item>mse</item>
+        <item>simple</item>
+        <item>arctan</item>
+    </string-array>
+
 </resources>

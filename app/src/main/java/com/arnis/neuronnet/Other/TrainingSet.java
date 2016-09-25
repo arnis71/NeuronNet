@@ -4,6 +4,7 @@ import com.arnis.neuronnet.Retrofit.Data;
 import com.arnis.neuronnet.Retrofit.Stock;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class TrainingSet {
         return trainSet.get(index);
     }
 
-    public void addTrainStocks(List<Stock> stocks){
+    public void addTrainStocks(List<Stock> stocks,int predictWindow,int prediction){
         List<Double> percentage = new ArrayList<>();
 
         double difference;
@@ -46,21 +47,28 @@ public class TrainingSet {
             percentage.add(res);
         }
 
-        for (int i = 0; i < percentage.size() - 3; i++) {
-            addEntry(new Set(
-                    stocks.get(i).Symbol+" "+stocks.get(i+4).Date,
-                    new double[]{percentage.get(i),percentage.get(i+1),percentage.get(i+2)},
-                    new double[]{percentage.get(i+3)}));
+        for (int i = 0; i <= percentage.size() - (predictWindow+prediction); i++) {
+            double[] window = new double[predictWindow];
+            double[] predict = new double[prediction];
+            int j;
+            for (j = 0; j < predictWindow; j++) {
+                window[j] = percentage.get(i+j);
+            }
+            int k=0;
+            for (; j < prediction+predictWindow; j++) {
+                predict[k++] = percentage.get(i+j);
+            }
+            addEntry(new Set(window,predict));
         }
 
     }
-    public void addWorkStocks(List<Stock> stocks){
+    public void addWorkStocks(List<Stock> stocks,int predictWindow){
         List<Double> percentage = new ArrayList<>();
 
         double difference;
         double res;
 
-        for (int i = 0; i < stocks.size() - 1; i++) {
+        for (int i = stocks.size()-predictWindow-1; i < stocks.size()-1; i++) {
             difference = (stocks.get(i+1).average()-stocks.get(i).average());
             res = difference/stocks.get(i).average();
             if (res>1)
@@ -68,10 +76,11 @@ public class TrainingSet {
             percentage.add(res);
         }
 
-        for (int i = 0; i < percentage.size() - 2; i++) {
-            addEntry(new Set(stocks.get(i).Symbol, new double[]{percentage.get(i),percentage.get(i+1),percentage.get(i+2)}));
+        double[] window = new double[predictWindow];
+        for (int j = 0; j < predictWindow; j++) {
+            window[j] = percentage.get(j);
         }
-        res=0;
+        addEntry(new Set(stocks.get(predictWindow).Symbol, window));
 
     }
 
@@ -80,23 +89,15 @@ public class TrainingSet {
         private double[] inputValues;
         private double[] desiredOutput;
 
-        public Set(String description, double[] inputValues, double[] desiredOutput) {
+        private Set(double[] inputValues, double[] desiredOutput) {
             this.description = description;
             this.inputValues = inputValues;
             this.desiredOutput = desiredOutput;
         }
-        public Set(String description, double[] inputValues) {
+        private Set(String description, double[] inputValues) {
             this.description = description;
             this.inputValues = inputValues;
         }
-
-//        public Set() {
-//            inputValues
-//        }
-//
-//        public void addInput(double input){
-//            inputValues
-//        }
 
         public String getDescription() {
             return description;
