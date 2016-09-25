@@ -9,16 +9,20 @@ import com.arnis.neuronnet.Net.NeuronNet;
 public class Prefs {
     private String brains;
     private boolean train;
-    private int epoch;
+    private int iterations;
     private String type;
     private String stockType;
     private String error;
+    private int window;
+    private int prediction;
 
-    public Prefs(String stockType,String brains,boolean train, int epoch, int type, int error) {
+    public Prefs(String stockType, String brains, boolean train, int iterations, int type, int error,int window,int prediction) {
         this.stockType = stockType;
         this.train = train;
         this.brains = brains;
-        this.epoch = epoch;
+        this.iterations = iterations;
+        this.window = window;
+        this.prediction = prediction;
         switch (type){
             case 0: this.type = NeuronNet.FEEDFORWARD_NN;break;
             case 1: this.type = NeuronNet.ELMAN_NN;break;
@@ -43,8 +47,8 @@ public class Prefs {
         return brains;
     }
 
-    public int getEpoch() {
-        return epoch;
+    public int getIterations() {
+        return iterations;
     }
 
     public String getType() {
@@ -53,5 +57,13 @@ public class Prefs {
 
     public String getError() {
         return error;
+    }
+
+    public int getPrediction() {
+        return prediction;
+    }
+
+    public int getWindow() {
+        return window;
     }
 }

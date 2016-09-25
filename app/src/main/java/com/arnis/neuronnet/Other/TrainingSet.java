@@ -62,7 +62,7 @@ public class TrainingSet {
                 }
                 addEntry(new Set(window, predict));
             }
-        } else return;
+        }
 
     }
     public void addWorkStocks(List<Stock> stocks,int predictWindow){
@@ -70,21 +70,21 @@ public class TrainingSet {
 
         double difference;
         double res;
+        if (stocks.size()>predictWindow) {
+            for (int i = stocks.size() - predictWindow - 1; i < stocks.size() - 1; i++) {
+                difference = (stocks.get(i + 1).average() - stocks.get(i).average());
+                res = difference / stocks.get(i).average();
+                if (res > 1)
+                    res = 1;
+                percentage.add(res);
+            }
 
-        for (int i = stocks.size()-predictWindow-1; i < stocks.size()-1; i++) {
-            difference = (stocks.get(i+1).average()-stocks.get(i).average());
-            res = difference/stocks.get(i).average();
-            if (res>1)
-                res=1;
-            percentage.add(res);
+            double[] window = new double[predictWindow];
+            for (int j = 0; j < predictWindow; j++) {
+                window[j] = percentage.get(j);
+            }
+            addEntry(new Set(stocks.get(predictWindow).Symbol, window));
         }
-
-        double[] window = new double[predictWindow];
-        for (int j = 0; j < predictWindow; j++) {
-            window[j] = percentage.get(j);
-        }
-        addEntry(new Set(stocks.get(predictWindow).Symbol, window));
-
     }
 
     public static class Set{

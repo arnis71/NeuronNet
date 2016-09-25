@@ -13,6 +13,11 @@
     android:orientation="vertical">
 
     <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="complex analysis"
+        android:id="@+id/complex"/>
+    <CheckBox
         android:layout_gravity="center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -42,6 +47,18 @@
         android:layout_height="wrap_content"
         android:id="@+id/max_epoch"
         android:hint="iterations"
+        android:inputType="number"/>
+    <EditText
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/window"
+        android:hint="window"
+        android:inputType="number"/>
+    <EditText
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/prediction"
+        android:hint="prediction"
         android:inputType="number"/>
     <EditText
         android:layout_width="100dp"

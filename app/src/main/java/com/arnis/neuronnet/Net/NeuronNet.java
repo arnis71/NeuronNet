@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.arnis.neuronnet.MainActivity;
 import com.arnis.neuronnet.Neurons.InputNeuron;
 import com.arnis.neuronnet.Neurons.Neural;
 import com.arnis.neuronnet.Neurons.OutputNeuron;
@@ -53,16 +54,19 @@ public abstract class NeuronNet {
     ArrayList<ArrayList<Neural>> neuronLayers;
     Map<String,double[]> results;
 
-    private ValueChangeListener epochListener;
+    private ValueChangeListener iterationListener;
 
-    public void setEpochListener(ValueChangeListener listener){
-        epochListener = listener;
+    public void setIterationListener(ValueChangeListener listener){
+        iterationListener = listener;
     }
 
     public void setName(String name){
         if (name.equals("no brains"))
             this.name = "default";
         else this.name = name;
+    }
+    public String getName(){
+        return name;
     }
 
     public static NeuronNet getNN(String type){
@@ -99,19 +103,18 @@ public abstract class NeuronNet {
 
     public void join(){
         try {
-            neuralThread.join();
+            if (neuralThread!=null)
+                neuralThread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
-    public static NeuronNet requestStockSolvingNN(Context context, Prefs prefs,int predictionWindow,int predictPositions){
+    public static NeuronNet requestStockSolvingNN(Context context, Prefs prefs){
 
-//        int predictionWindow = 4;
-//        int predictPositions = 2;
         int[] hiddenNeurons = new int[]{3};
 
-        NetDimen dimensions = new NetDimen(predictionWindow,predictPositions,hiddenNeurons);
+        NetDimen dimensions = new NetDimen(prefs.getWindow(),prefs.getPrediction(),hiddenNeurons);
 
         NeuronNet.Builder builder = new NeuronNet.Builder(NeuronNet.getNN(prefs.getType()));
         builder.setDimensions(dimensions)
@@ -121,7 +124,7 @@ public abstract class NeuronNet {
                 .addBrains(context);
 
         NeuronNet net = builder.build();
-        net.setMaxIterations(prefs.getEpoch());
+        net.setMaxIterations(prefs.getIterations());
 
         net.epoch = context.getSharedPreferences(prefs.getBrainName()+"_info",Context.MODE_PRIVATE).getInt("epoch",0);
         net.err = Double.parseDouble(context.getSharedPreferences(prefs.getBrainName()+"_info",Context.MODE_PRIVATE).getString("error","0"));
@@ -150,6 +153,8 @@ public abstract class NeuronNet {
         editor.putInt("epoch",getEpoch());
         editor.putString("error",Double.toString(getTotalError())).apply();
         brains.saveBrains(name,this);
+        editor = context.getSharedPreferences(MainActivity.BRAINS_STORAGE,Context.MODE_PRIVATE).edit();
+        editor.putString(name,name).apply();
     }
 
     private void loadBrains(String name){
@@ -289,14 +294,16 @@ public abstract class NeuronNet {
 
     void setIteration(int iteration) {
         this.iteration = iteration;
-        if (epochListener!=null)
-            epochListener.onValueChange(iteration);
+        if (iterationListener !=null)
+            iterationListener.onValueChange(iteration);
     }
 
     void iterate() {
         iteration++;
         this.epoch++;
-        epochListener.onValueChange(iteration);
+        if (iterationListener!=null){
+            iterationListener.onValueChange(iteration);
+        }
     }
 
     void resetIterations(){

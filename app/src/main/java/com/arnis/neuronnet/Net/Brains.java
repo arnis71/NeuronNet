@@ -28,7 +28,7 @@ public class Brains {
 
     // TODO: 23/09/2016 take biases into consideration
     public boolean checkCompat(String name,NeuronNet net){
-        if (name.equals("no brains"))
+        if (name.equals("default"))
             return false;
 
         dimenStorage = context.getSharedPreferences(name+"_storage",Context.MODE_PRIVATE);

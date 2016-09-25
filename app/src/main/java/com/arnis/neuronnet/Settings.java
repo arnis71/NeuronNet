@@ -23,9 +23,13 @@ public class Settings extends AppCompatActivity {
     private EditText iter;
     private CheckBox train;
     private EditText stockType;
+    private CheckBox complex;
+    private EditText window;
+    private EditText prediction;
 
     private SharedPreferences prefs;
     private boolean isTrain;
+    private boolean isComplex;
     public static final String SETTINGS_PREFS = "settings";
     public static final String SETTINGS_BRAINS = "brains_name";
     public static final String SETTINGS_ERROR = "error";
@@ -33,6 +37,9 @@ public class Settings extends AppCompatActivity {
     public static final String SETTINGS_ITERATIONS = "iterations";
     public static final String SETTINGS_TRAIN = "train";
     public static final String SETTINGS_STOCKS_TYPE = "stock_type";
+    public static final String SETTINGS_WINDOW = "window";
+    public static final String SETTINGS_PREDICTION = "prediction";
+    public static final String COMPLEX_ANALYSIS = "complex";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +52,9 @@ public class Settings extends AppCompatActivity {
         iter = (EditText)findViewById(R.id.max_epoch);
         stockType = (EditText)findViewById(R.id.stocks);
         train = (CheckBox)findViewById(R.id.train_nn);
+        complex = (CheckBox)findViewById(R.id.complex);
+        window = (EditText)findViewById(R.id.window);
+        prediction = (EditText)findViewById(R.id.prediction);
 //        momentum = (EditText)findViewById(R.id.momentum);
 //        learning = (EditText)findViewById(R.id.learning_rate);
 
@@ -68,6 +78,12 @@ public class Settings extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 isTrain=isChecked;
+            }
+        });
+        complex.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                isComplex = isChecked;
             }
         });
 
@@ -132,6 +148,7 @@ public class Settings extends AppCompatActivity {
 
     private void saveSettings(){
         SharedPreferences.Editor edit = prefs.edit();
+        edit.putBoolean(COMPLEX_ANALYSIS,isComplex);
         edit.putBoolean(SETTINGS_TRAIN,isTrain);
         edit.putInt(SETTINGS_ERROR,error.getSelectedItemPosition());
         edit.putInt(SETTINGS_TYPE,type.getSelectedItemPosition());
@@ -141,16 +158,23 @@ public class Settings extends AppCompatActivity {
         check = stockType.getText().toString();
         if (!check.equals(""))
             edit.putString(SETTINGS_STOCKS_TYPE,check);
+        check = window.getText().toString();
+        if (!check.equals(""))
+            edit.putInt(SETTINGS_WINDOW,Integer.parseInt(check));
+        check = prediction.getText().toString();
+        if (!check.equals(""))
+            edit.putInt(SETTINGS_PREDICTION,Integer.parseInt(check));
         edit.apply();
     }
     private void loadSettings(){
-//        brains.setChecked(prefs.getBoolean(SETTINGS_BRAINS,true));
+        complex.setChecked(prefs.getBoolean(COMPLEX_ANALYSIS,false));
         train.setChecked(prefs.getBoolean(SETTINGS_TRAIN,false));
         iter.setText(Integer.toString(prefs.getInt(SETTINGS_ITERATIONS,5000)));
         type.setSelection(prefs.getInt(SETTINGS_TYPE,0));
         error.setSelection(prefs.getInt(SETTINGS_ERROR,0));
         stockType.setText(prefs.getString(SETTINGS_STOCKS_TYPE,"AAPL"));
-
+        window.setText(Integer.toString(prefs.getInt(SETTINGS_WINDOW,2)));
+        prediction.setText(Integer.toString(prefs.getInt(SETTINGS_PREDICTION,1)));
     }
     @Override
     public void finish() {

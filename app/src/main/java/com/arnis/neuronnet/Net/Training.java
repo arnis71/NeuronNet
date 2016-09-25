@@ -19,7 +19,7 @@ public interface Training {
         public void train() {
             net.resetErr();
             for (net.getIteration(); net.getIteration() < net.getMaxIterations(); net.iterate()) {
-                Log.d("happy", "epoch "+net.getIteration()+" out of "+net.getMaxIterations() + " total epoch "+ net.getEpoch());
+                Log.d("happy", net.getName()+" iteration "+net.getIteration()+" out of "+net.getMaxIterations() + " total epoch "+ net.getEpoch());
                 for (int i = 0; i < net.getTrainingSet().getSetEntries(); i++) {
                     net.loadValuesFromSet(i);
                     net.calculateInOut();
