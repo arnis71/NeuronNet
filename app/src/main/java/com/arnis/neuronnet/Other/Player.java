@@ -21,7 +21,6 @@ import java.util.ArrayList;
 
 public class Player {
     private static final String TAG = "happytech";
-    private Currency currency;
     private NeuralHelper helper;
     private ArrayList<Currency> chart;
     private double money;
@@ -29,6 +28,26 @@ public class Player {
     double amount;
     String decision;
     private Context context;
+    private ValueChangeListener moneyChange;
+    public void setMoneyChangeListener(ValueChangeListener listener){
+        moneyChange = listener;
+    }
+    private ValueChangeListener rateChange;
+    public void setRateChangeListener(ValueChangeListener listener){
+        rateChange = listener;
+    }
+    private ValueChangeListener predictionChange;
+    public void setPredictionChangeListener(ValueChangeListener listener){
+        predictionChange = listener;
+    }
+    private ValueChangeListener positionOpened;
+    public void setPositionOpenedListener(ValueChangeListener listener){
+        positionOpened = listener;
+    }
+    private ValueChangeListener signal;
+    public void setSignalListener(ValueChangeListener listener){
+        signal = listener;
+    }
 
     String direction;
     boolean canPredict;
@@ -47,11 +66,17 @@ public class Player {
         canTrain=true;
     }
 
-    // TODO: 28/09/2016 apply floating window e.g. 100 entries 
+
 
 
     public void play(){
         loadData();
+        moneyChange.onValueChange(money);
+        if (chart.size()>0){
+            for (int i = 0; i < chart.size(); i++) {
+                rateChange.onValueChange(chart.get(i).ask,chart.get(i).bid);
+            }
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -62,6 +87,7 @@ public class Player {
                         Currency currency = Utility.getUSDRUB(result);
                         if (currency!=null){
                             chart.add(currency);
+                            rateChange.onValueChange(currency.ask,currency.bid);
                             saveData(currency);
                             Log.d(TAG, "new entry "+String.format("%.4f",chart.get(chart.size()-1).average()) +" total: "+Integer.toString(chart.size())+" entries");
                             makePrediction();
@@ -143,7 +169,7 @@ public class Player {
                             canPredict = true;
                         }
                         try {
-                            Thread.sleep(15000);
+                            Thread.sleep(30000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -161,33 +187,35 @@ public class Player {
             helper.run();
             helper.join();
             canTrain=true;
+//              TODO: 28/09/2016 for complex solution
+//            predictionChange.onValueChange(helper.currencyPredictionsToChart(chart));
 
-            ArrayList<Double> predictions = handlePrediction(helper.getPredictions());
-            ArrayList<Double> changes = new ArrayList<>();
+            ArrayList<Double> predictions = averageOfAllPredictions(helper.getPredictions());
             ArrayList<Double> results = new ArrayList<>();
+            results.add(chart.get(chart.size() - 1).average());
             for (int i = 0; i < predictions.size(); i++) {
                 if (i == 0) {
-                    changes.add(predictions.get(i) * chart.get(chart.size() - 1).ask);// TODO: 27/09/2016
-                    results.add(chart.get(chart.size() - 1).ask + changes.get(i));
+                    results.add(chart.get(chart.size() - 1).average() + (predictions.get(i) * chart.get(chart.size() - 1).average()));
                 } else {
-                    changes.add(predictions.get(i) * results.get(i - 1));
-                    results.add(results.get(i - 1) + changes.get(i));
+                    results.add(results.get(i - 1) + (predictions.get(i) * results.get(i - 1)));
                 }
             }
 
-            for (Double d : changes) {
-                if (d > 0 && (direction == null || !direction.equals("down"))) {
+            predictionChange.onValueChange(results);
+            signal.onValueChange(results);
+
+            for (int i=0;i<results.size()-1;i++) {
+                if (results.get(i) < results.get(i+1) && (direction == null || !direction.equals("down"))) {
                     direction = "up";
-                    buy();
-                } else if (d < 0 && (direction == null || !direction.equals("up"))) {
+                } else if (results.get(i) > results.get(i+1) && (direction == null || !direction.equals("up"))) {
                     direction = "down";
-                    buy();
                 } else {
                     Log.d(TAG, "uncertain prediction");
                     direction = "";
 //                    sell(false);
                     return;
                 }
+                buy();
 //                if (!decision.equals("") && !direction.equals("") && !direction.equals(decision))
 //                    sell(false);
             }
@@ -199,9 +227,10 @@ public class Player {
 
     private void buy(){
         if (openedPosition==0&&chart.size()>20){
-            openedPosition = chart.get(chart.size()-1).ask;// TODO: 28/09/2016 ask for binary
+            openedPosition = chart.get(chart.size()-1).ask;
             decision=direction;
             amount = (money*0.05);
+            positionOpened.onPositionOpen(openedPosition,decision,amount);
             Log.d("happytechcheck", "POSITION OPENED at "+ String.format("%.4f",openedPosition)+ ", decision - "+ decision);
             new Thread(new Runnable() {
                 @Override
@@ -224,15 +253,20 @@ public class Player {
         if (openedPosition!=0) {
             double result = chart.get(chart.size() - 1).ask - openedPosition;
             if (result > 0 && decision.equals("up")) {
-                result = amount+(amount*0.7);
+                result = amount*0.7;
                 money += result;
+                moneyChange.onValueChange(money);
                 Log.d("happytechcheck", "SUCCESS, earned " + String.format("%.2f",result) + "$");
             } else if (result < 0 && decision.equals("down")) {
                 result = amount+(amount*-0.7);
                 money += result;
+                moneyChange.onValueChange(money);
                 Log.d("happytechcheck", "SUCCESS, earned " + String.format("%.2f",result) + "$");
+            } else if (result==0) {
+                Log.d("happytechcheck", "DRAW, funds returned");
             } else {
                 money -= amount;
+                moneyChange.onValueChange(money);
                 Log.d("happytechcheck", "FAIL, lost " + String.format("%.1f",amount) + "$");
             }
             Log.d("happytechcheck", "POSITION CLOSED at " + String.format("%.4f",chart.get(chart.size() - 1).ask) + ", current money " + String.format("%.2f",money)+"$");
@@ -246,17 +280,24 @@ public class Player {
         Double sum=new Double("0");
         for (Double d:arr)
             sum+=d;
-        return sum/arr.size();
+        sum-=arr.get(0);
+        return sum/(arr.size()-1);
     }
 
-    private ArrayList<Double> handlePrediction(ArrayList<double[]> predictions){
+    private ArrayList<Double> averageOfAllPredictions(ArrayList<double[]> predictions){
         ArrayList<Double> fin = new ArrayList<>();
         double sum=0;
-        for (int j = 0; j < predictions.get(0).length; j++) {
-            for (int i = 0; i < predictions.size(); i++) {
-                sum+=predictions.get(i)[j];
+        int sch=0;
+        int i;
+        for (int j = 0; j < predictions.get(predictions.size()-1).length; j++) {
+            for (i = 0; i < predictions.size(); i++) {
+                if (predictions.get(i).length>j){
+                    sum+=predictions.get(i)[j];
+                    sch++;
+                }
             }
-            fin.add(sum/predictions.size());
+            fin.add(sum/sch);
+            sch=0;
         }
         return fin;
     }

@@ -7,16 +7,13 @@ import android.widget.TextView;
 
 import com.arnis.neuronnet.Other.OnCompleteListener;
 import com.arnis.neuronnet.Other.Prefs;
-import com.arnis.neuronnet.Other.Utility;
 import com.arnis.neuronnet.Other.ValueChangeListener;
 import com.arnis.neuronnet.Retrofit.Currency;
 import com.arnis.neuronnet.Retrofit.Stock;
 import com.github.mikephil.charting.data.Entry;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by arnis on 27/09/2016.
@@ -90,7 +87,28 @@ public class NeuralHelper {
         return pred;
     }
 
-    public ArrayList<List<Entry>> predictionsToChart(List<Stock> stocks){
+    public ArrayList<List<Entry>> stockPredictionsToChart(List<Stock> stocks){
+        ArrayList<List<Entry>> res = new ArrayList<>();
+        int k=0;
+        for (NeuronNet net:nets) {
+            double predictFrom = stocks.get(stocks.size()-1).average();
+            double[] arr = net.getOutput();
+            res.add(new ArrayList<Entry>());
+            if (arr.length>0) {
+                double next;
+                int i = stocks.size()-1;
+                res.get(k).add(new Entry((float) i, (float) predictFrom));
+                for (int j = 0; j < arr.length; j++) {
+                    next = predictFrom + (predictFrom * arr[0]);
+                    res.get(k).add(new Entry((float)++i, (float) next));
+                    predictFrom = next;
+                }
+            }
+            k++;
+        }
+        return res;
+    }
+    public ArrayList<List<Entry>> currencyPredictionsToChart(List<Currency> stocks){
         ArrayList<List<Entry>> res = new ArrayList<>();
         int k=0;
         for (NeuronNet net:nets) {
@@ -145,6 +163,20 @@ public class NeuralHelper {
                     });
 
                 }
+                @Override
+                public void onValueChange(double ask, double bid) {
+
+                }
+
+                @Override
+                public void onPositionOpen(double at, String direction, double amount) {
+
+                }
+
+                @Override
+                public void onValueChange(ArrayList<Double> values) {
+
+                }
             });
         } else{
             pb.setMax(getLastNet().getMaxIterations());
@@ -157,6 +189,20 @@ public class NeuralHelper {
                             pb.setProgress((int) value);
                         }
                     });
+
+                }
+                @Override
+                public void onValueChange(double ask, double bid) {
+
+                }
+
+                @Override
+                public void onPositionOpen(double at, String direction, double amount) {
+
+                }
+
+                @Override
+                public void onValueChange(ArrayList<Double> values) {
 
                 }
             });

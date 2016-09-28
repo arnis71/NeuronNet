@@ -14,7 +14,6 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Spinner;
 
-import java.util.Collections;
 import java.util.Set;
 
 import static com.arnis.neuronnet.MainActivity.COMPLEX_ANALYSIS;

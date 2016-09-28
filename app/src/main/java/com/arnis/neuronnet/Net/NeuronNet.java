@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.arnis.neuronnet.MainActivity;
+import com.arnis.neuronnet.StockPrediction;
 import com.arnis.neuronnet.Neurons.InputNeuron;
 import com.arnis.neuronnet.Neurons.Neural;
 import com.arnis.neuronnet.Neurons.OutputNeuron;
@@ -19,7 +20,6 @@ import com.arnis.neuronnet.Retrofit.Stock;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by arnis on 04.09.2016.
