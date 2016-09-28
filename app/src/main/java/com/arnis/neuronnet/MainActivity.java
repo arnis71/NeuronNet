@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -16,13 +15,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.arnis.neuronnet.Net.NeuronNet;
-import com.arnis.neuronnet.Other.OnCompleteListener;
+import com.arnis.neuronnet.Net.NeuralHelper;
+import com.arnis.neuronnet.Other.Player;
 import com.arnis.neuronnet.Other.Prefs;
-import com.arnis.neuronnet.Other.ValueChangeListener;
 import com.arnis.neuronnet.Retrofit.Data;
 import com.arnis.neuronnet.Retrofit.Results;
 import com.arnis.neuronnet.Retrofit.Stock;
+import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -33,44 +32,38 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
 
-    private NeuronNet neuralNetwork;
-    private Prefs prefs;
+    private Prefs mainPrefs;
     private LineChart lineChart;
-    private List<Stock> data;
-    private List<Stock> checkData;
+    private List<Stock> stocks;
+    private List<Stock> checkStocks;
     private EditText startDate;
     private EditText endDate;
 
     private TextView error;
     private ProgressBar pb;
 
-    private Prefs prefs1;
-    private Prefs prefs2;
-    private Prefs prefs3;
-    private Prefs prefs4;
-    private Prefs prefs5;
-    private NeuronNet neuralNetwork1;
-    private NeuronNet neuralNetwork2;
-    private NeuronNet neuralNetwork3;
-    private NeuronNet neuralNetwork4;
-    private NeuronNet neuralNetwork5;
-    int nntype;
-    int nnerror;
+    private NeuralHelper helper;
+    List<ILineDataSet> chartDataSets;
+    List<Entry> realData;
+    int dataSch=0;
 
     public static final String BRAINS_STORAGE = "brains_storage";
+    public static final String SETTINGS_PREFS = "settings";
+    public static final String SETTINGS_BRAINS = "brains_name";
+    public static final String SETTINGS_ERROR = "error";
+    public static final String SETTINGS_TYPE = "type";
+    public static final String SETTINGS_ITERATIONS = "iterations";
+    public static final String SETTINGS_TRAIN = "run";
+    public static final String SETTINGS_STOCKS_TYPE = "stock_type";
+    public static final String SETTINGS_WINDOW = "window";
+    public static final String SETTINGS_PREDICTION = "prediction";
+    public static final String COMPLEX_ANALYSIS = "complex";
     private TextView currentBrain;
     private TextView currentStock;
-
-    private boolean isComplex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +79,9 @@ public class MainActivity extends AppCompatActivity {
         currentStock = (TextView) findViewById(R.id.current_stock);
 
         // TODO: 25/09/2016 control hidden neurons
+        // TODO: 27/09/2016 run for ____ stock final
+        // TODO: 27/09/2016 add period of trainig in info
+        // TODO: 27/09/2016 dont judge by average in stocks
     }
 
     @Override
@@ -93,115 +89,38 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         loadSettings();
         applyInfo();
-
-        if (isComplex) {
-            prefs1 = new Prefs(prefs.getStockType(), prefs.getStockType() + " ultra short", prefs.isTrain(), prefs.getIterations(), nntype, nnerror, 2, 1);
-            prefs2 = new Prefs(prefs.getStockType(), prefs.getStockType() + " short", prefs.isTrain(), prefs.getIterations(), nntype, nnerror, 4, 2);
-            prefs3 = new Prefs(prefs.getStockType(), prefs.getStockType() + " medium", prefs.isTrain(), prefs.getIterations(), nntype, nnerror, 7, 2);
-            prefs4 = new Prefs(prefs.getStockType(), prefs.getStockType() + " long", prefs.isTrain(), prefs.getIterations(), nntype, nnerror, 10, 3);
-            prefs5 = new Prefs(prefs.getStockType(), prefs.getStockType() + " ultra long", prefs.isTrain(), prefs.getIterations(), nntype, nnerror, 14, 3);
-
-            neuralNetwork1 = NeuronNet.requestStockSolvingNN(getApplicationContext(), prefs1);
-            neuralNetwork2 = NeuronNet.requestStockSolvingNN(getApplicationContext(), prefs2);
-            neuralNetwork3 = NeuronNet.requestStockSolvingNN(getApplicationContext(), prefs3);
-            neuralNetwork4 = NeuronNet.requestStockSolvingNN(getApplicationContext(), prefs4);
-            neuralNetwork5 = NeuronNet.requestStockSolvingNN(getApplicationContext(), prefs5);
-        } else {
-            neuralNetwork = NeuronNet.requestStockSolvingNN(getApplicationContext(), prefs);
-        }
-
-        progressBarSetup();
+        helper = new NeuralHelper(this);
+        helper.addNets(mainPrefs);
+        helper.setProgressBar(pb);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (isComplex) {
-            storeData(neuralNetwork1, prefs1);
-            storeData(neuralNetwork2, prefs2);
-            storeData(neuralNetwork3, prefs3);
-            storeData(neuralNetwork4, prefs4);
-            storeData(neuralNetwork5, prefs5);
-        } else if (neuralNetwork.getName()!=null&&!neuralNetwork.getName().equals("default"))
-            storeData(neuralNetwork, prefs);
-    }
-
-    private void progressBarSetup() {
-        if (!isComplex) {
-            pb.setMax(neuralNetwork.getMaxIterations());
-            neuralNetwork.setIterationListener(new ValueChangeListener() {
-                @Override
-                public void onValueChange(final double value) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            pb.setProgress((int) value);
-                        }
-                    });
-
-                }
-            });
-        } else{
-            pb.setMax(neuralNetwork5.getMaxIterations());
-            neuralNetwork5.setIterationListener(new ValueChangeListener() {
-                @Override
-                public void onValueChange(final double value) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            pb.setProgress((int) value);
-                        }
-                    });
-
-                }
-            });
-        }
-    }
-
-    private void storeData(NeuronNet net, Prefs prefs) {
-        net.store(prefs.getBrainName(), getApplicationContext());
-    }
-
-    private void run(final NeuronNet net, final Prefs prefs) {
-        net.addStockData(data);
-        net.setName(prefs.getBrainName());
-        net.startWithListener(new OnCompleteListener() {
-            @Override
-            public void onComplete() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (net.isTraining()) {
-                            error.setText(String.format("%.4f", net.getTotalError() * 100) + "%");
-                        }
-                    }
-                });
-            }
-        });
+        helper.storeData();
     }
 
     private void loadSettings() {
-        SharedPreferences preferences = getSharedPreferences(Settings.SETTINGS_PREFS, MODE_PRIVATE);
+        SharedPreferences preferences = getSharedPreferences(SETTINGS_PREFS, MODE_PRIVATE);
 
-        isComplex = preferences.getBoolean(Settings.COMPLEX_ANALYSIS, false);
-        nntype = preferences.getInt(Settings.SETTINGS_TYPE, 0);
-        nnerror = preferences.getInt(Settings.SETTINGS_ERROR, 0);
-
-        prefs = new Prefs(preferences.getString(Settings.SETTINGS_STOCKS_TYPE, "no stock"),
-                preferences.getString(Settings.SETTINGS_BRAINS, "default"),
-                preferences.getBoolean(Settings.SETTINGS_TRAIN, false),
-                preferences.getInt(Settings.SETTINGS_ITERATIONS, 5000),
-                nntype,
-                nnerror,
-                preferences.getInt(Settings.SETTINGS_WINDOW, 2),
-                preferences.getInt(Settings.SETTINGS_PREDICTION, 1));
+        mainPrefs = new Prefs(preferences.getString(SETTINGS_STOCKS_TYPE, "n/a"),
+                preferences.getString(SETTINGS_BRAINS, "default"),
+                preferences.getBoolean(COMPLEX_ANALYSIS, false),
+                preferences.getBoolean(SETTINGS_TRAIN, false),
+                preferences.getInt(SETTINGS_ITERATIONS, 5000),
+                preferences.getInt(SETTINGS_TYPE, 0),
+                preferences.getInt(SETTINGS_ERROR, 0),
+                preferences.getInt(SETTINGS_WINDOW, 2),
+                preferences.getInt(SETTINGS_PREDICTION, 1));
 
     }
 
     private void applyInfo() {
-        currentBrain.setText(prefs.getBrainName());
-        currentStock.setText(prefs.getStockType());
+        currentBrain.setText(mainPrefs.getBrainName());
+        currentStock.setText(mainPrefs.getSymbol());
     }
+
+
 
     public void start(final View view) {
         view.setClickable(false);
@@ -210,77 +129,10 @@ public class MainActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    Results body = Data.get(prefs.getStockType(), startDate.getText().toString(), endDate.getText().toString()).execute().body();
-                    if (body!=null){
-                        data = body.quote;
-                        Collections.reverse(data);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                buildChart(null);
-                            }
-                        });
-                    }
-
-                    if (isComplex) {
-                        MainActivity.this.run(neuralNetwork1, prefs1);
-                        MainActivity.this.run(neuralNetwork2, prefs2);
-                        MainActivity.this.run(neuralNetwork3, prefs3);
-                        MainActivity.this.run(neuralNetwork4, prefs4);
-                        MainActivity.this.run(neuralNetwork5, prefs5);
-                        if (!neuralNetwork1.isTraining()) {
-                            body = Data.check().execute().body();
-                            if (body != null) {
-                                checkData = body.quote;
-                                Collections.reverse(checkData);
-                                neuralNetwork1.join();
-                                neuralNetwork2.join();
-                                neuralNetwork3.join();
-                                neuralNetwork4.join();
-                                neuralNetwork5.join();
-
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        buildChart(render(neuralNetwork1), render(neuralNetwork2), render(neuralNetwork3),
-                                                render(neuralNetwork4), render(neuralNetwork5));
-                                    }
-                                });
-                            }
-                        }
-
-                    } else {
-                        MainActivity.this.run(neuralNetwork, prefs);
-
-                        if (!neuralNetwork.isTraining()) {
-                            body = Data.check().execute().body();
-                            if (body != null){
-                                checkData = body.quote;
-                                Collections.reverse(checkData);
-                                neuralNetwork.join();
-
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        buildChart(render(neuralNetwork));
-                                    }
-                                });
-                            }
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                if (isComplex) {
-                    neuralNetwork1.join();
-                    neuralNetwork2.join();
-                    neuralNetwork3.join();
-                    neuralNetwork4.join();
-                    neuralNetwork5.join();
-                } else neuralNetwork.join();
-
+//                stockPredict();
+                // TODO: 28/09/2016 binary prediction
+                Player player = new Player(getApplicationContext(),helper);
+                player.play();
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -293,146 +145,77 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-
-
-
-
-    private void buildChart(ArrayList<Double> render) {
-        List<Entry> realData = new ArrayList<Entry>();
-        List<Entry> nn1 = new ArrayList<Entry>();
-
-        int i=0;
-        if (checkData==null||render==null) {
-            for (Stock stock : data) {
-                realData.add(new Entry((float) i++, (float) stock.average()));
+    private void stockPredict() {
+        try {
+            Results body = Data.getStock(mainPrefs.getSymbol(), startDate.getText().toString(), endDate.getText().toString()).execute().body();
+            if (body!=null){
+                stocks = body.quote;
+                Collections.reverse(stocks);
+                helper.addStockData(stocks);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        buildBaseChart();
+                    }
+                });
             }
-            i = 0;
-        } else {
-            for (Stock stock : checkData) {
-                realData.add(new Entry((float) i++, (float) stock.average()));
-            }
-            i = 0;
+            helper.run(error);
+            if (!helper.isTraining()){
+                body = Data.checkStock().execute().body();
+                checkStocks = body.quote;
+                Collections.reverse(checkStocks);
+                helper.join();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateChart(helper.predictionsToChart(stocks));}});
+            }else helper.join();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
 
+    private void buildBaseChart(){
+        chartDataSets = new ArrayList<ILineDataSet>();
+        realData = new ArrayList<Entry>();
+
+        dataSch=0;
+        for (Stock stock : stocks) {
+            realData.add(new Entry((float) dataSch++, (float) stock.average()));
+        }
         LineDataSet real = new LineDataSet(realData, "Real");
         real.setColor(Color.BLACK);
         real.setLineWidth(1.5f);
-        List<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
-        dataSets.add(real);
-
-        if (render!=null){
-            for (Double d: render) {
-                nn1.add(new Entry((float)i++, d.floatValue()));
-            }
-
-            LineDataSet set1 = new LineDataSet(nn1, "Predictions of "+ neuralNetwork.getName());
-            set1.setColor(Color.RED);
-
-            dataSets.add(set1);
-        }
+        chartDataSets.add(real);
 
 
-        LineData lineData = new LineData(dataSets);
+        LineData lineData = new LineData(chartDataSets);
         lineChart.setData(lineData);
-        lineChart.invalidate(); // refresh
+        lineChart.invalidate();
     }
 
 
-    private void buildChart(ArrayList<Double> render1,ArrayList<Double> render2,ArrayList<Double> render3,ArrayList<Double> render4,ArrayList<Double> render5) {
-        List<Entry> realData = new ArrayList<Entry>();
-        List<Entry> nn1 = new ArrayList<Entry>();
-        List<Entry> nn2 = new ArrayList<Entry>();
-        List<Entry> nn3 = new ArrayList<Entry>();
-        List<Entry> nn4 = new ArrayList<Entry>();
-        List<Entry> nn5 = new ArrayList<Entry>();
+    private void updateChart(ArrayList<List<Entry>> entries) {
 
-        int i=0;
-        if (checkData==null||render1==null) {
-            for (Stock stock : data) {
-                realData.add(new Entry((float) i++, (float) stock.average()));
+        if (checkStocks!=null&&checkStocks.size()>0){
+            for (Stock stock : checkStocks) {
+                realData.add(new Entry((float) dataSch++, (float) stock.average()));
             }
-            i = 0;
-        } else {
-            for (Stock stock : checkData) {
-                realData.add(new Entry((float) i++, (float) stock.average()));
-            }
-            i = 0;
         }
+        if (entries!=null){
+            for (int i=0;i<entries.size();i++) {
+                LineDataSet set1 = new LineDataSet(entries.get(i), helper.getName(i));
+                set1.setColor(helper.getColor(i));
 
-        LineDataSet real = new LineDataSet(realData, "Real");
-        real.setColor(Color.BLACK);
-        real.setLineWidth(1.5f);
-        List<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
-        dataSets.add(real);
-
-        if (render1!=null){
-            for (Double d: render1) {
-                nn1.add(new Entry((float)i++, d.floatValue()));
+                chartDataSets.add(set1);
             }
-            i = 0;
-            for (Double d: render2) {
-                nn2.add(new Entry((float)i++, d.floatValue()));
-            }
-            i = 0;
-            for (Double d: render3) {
-                nn3.add(new Entry((float)i++, d.floatValue()));
-            }
-            i = 0;
-            for (Double d: render4) {
-                nn4.add(new Entry((float)i++, d.floatValue()));
-            }
-            i = 0;
-            for (Double d: render5) {
-                nn5.add(new Entry((float)i++, d.floatValue()));
-            }
-
-            LineDataSet set1 = new LineDataSet(nn1, "ultra short");
-            set1.setColor(Color.RED);
-
-            LineDataSet set2 = new LineDataSet(nn2, "short");
-            set2.setColor(Color.GREEN);
-
-            LineDataSet set3 = new LineDataSet(nn3, "medium");
-            set3.setColor(Color.YELLOW);
-
-            LineDataSet set4 = new LineDataSet(nn4, "long");
-            set4.setColor(Color.MAGENTA);
-
-            LineDataSet set5 = new LineDataSet(nn5, "ultra long");
-            set5.setColor(Color.BLUE);
-
-
-            dataSets.add(set1);
-            dataSets.add(set2);
-            dataSets.add(set3);
-            dataSets.add(set4);
-            dataSets.add(set5);
         }
-
-
-        LineData lineData = new LineData(dataSets);
+        LineData lineData = new LineData(chartDataSets);
         lineChart.setData(lineData);
-        lineChart.invalidate(); // refresh
+        lineChart.invalidate();
     }
 
-    private ArrayList<Double> render(NeuronNet neuronNet){
-        ArrayList<Double> res = new ArrayList<>();
-        if (!neuronNet.isTraining()&&neuronNet.getTrainingSet().getSetEntries()>0) {
-            Map<String, double[]> arr = neuronNet.getRawResults();
-            double[] temp = arr.get(prefs.getStockType());
-            double last = data.get(data.size() - 1).average();
-            for (int i = 0; i < data.size(); i++) {
-                res.add(last);
-            }
-            double next;
-            for (int i = 0; i < temp.length; i++) {
-                next = last + (last * temp[i]);
-                res.add(next);
-                last=next;
-            }
-        }
-        return res;
-    }
+
 
     public void openSettings(View view) {
         Intent intent = new Intent(this,Settings.class);
@@ -445,14 +228,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void saveBrains(View view) {
-        if (!isComplex||!neuralNetwork.getName().equals("default")) {
+        if (helper.canSaveBrains()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setIcon(R.mipmap.ic_launcher);
             builder.setTitle("Save brains");
 
-            String message = "This neural network is trained for " + prefs.getStockType() + " stocks, " + Integer.toString(neuralNetwork.getEpoch()) +
+            String message = "This neural network is trained for " + mainPrefs.getSymbol() + " stocks, " + Integer.toString(helper.getNet(0).getEpoch()) +
                     " times and has approximate error of "
-                    + String.format("%.4f", neuralNetwork.getTotalError() * 100) + "%";
+                    + String.format("%.4f", helper.getNet(0).getTotalError() * 100) + "%";
             builder.setMessage(message);
 
             builder.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
@@ -462,9 +245,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             final EditText input = new EditText(MainActivity.this);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             input.setLayoutParams(lp);
             input.setHint("brain name");
             builder.setView(input);
@@ -473,8 +254,10 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(DialogInterface dialog, int which) {
                     String name = input.getText().toString();
                     currentBrain.setText(name);
-                    getSharedPreferences(Settings.SETTINGS_PREFS, MODE_PRIVATE).edit().putString(Settings.SETTINGS_BRAINS, name).apply();
-                    neuralNetwork.store(name, getApplicationContext());
+                    SharedPreferences.Editor editor = getSharedPreferences(SETTINGS_PREFS, MODE_PRIVATE).edit();
+                    editor.putString(SETTINGS_BRAINS, name).apply();
+                    helper.setName(name);
+                    helper.storeData();
                 }
             });
             builder.show();

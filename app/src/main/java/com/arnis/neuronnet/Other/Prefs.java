@@ -9,6 +9,7 @@ import com.arnis.neuronnet.Net.NeuronNet;
 public class Prefs {
     private String brains;
     private boolean train;
+    private boolean complex;
     private int iterations;
     private String type;
     private String stockType;
@@ -16,8 +17,9 @@ public class Prefs {
     private int window;
     private int prediction;
 
-    public Prefs(String stockType, String brains, boolean train, int iterations, int type, int error,int window,int prediction) {
+    public Prefs(String stockType, String brains,boolean complexity, boolean train, int iterations, int type, int error,int window,int prediction) {
         this.stockType = stockType;
+        complex = complexity;
         this.train = train;
         this.brains = brains;
         this.iterations = iterations;
@@ -36,9 +38,12 @@ public class Prefs {
             default: this.error = null;break;
         }
     }
-    public String getStockType(){
+    public String getSymbol(){
         return stockType;
     }
+public boolean isComplex(){
+    return complex;
+}
 
     public boolean isTrain() {
         return train;
@@ -63,7 +68,18 @@ public class Prefs {
         return prediction;
     }
 
-    public int getWindow() {
+
+    public void setWindow(int window) {
+        this.window = window;
+    }
+
+    public void setPrediction(int prediction) {
+        this.prediction = prediction;
+    }    public int getWindow() {
         return window;
+    }
+
+    public void setName(String brains) {
+        this.brains = brains;
     }
 }

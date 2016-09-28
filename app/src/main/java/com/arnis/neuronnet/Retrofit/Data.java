@@ -40,7 +40,7 @@ public class Data {
 
     private static String requestURL;
 
-    public static Call<Results> get(String symbol,String from,String to) {
+    public static Call<Results> getStock(String symbol, String from, String to) {
 
         Data.symbol = symbol;
         Data.startDate = from;
@@ -66,8 +66,9 @@ public class Data {
         return api.getList(requestURL);
     }
 
-    public static Call<Results> check(){
+    public static Call<Results> checkStock(){
 
+        startDate=endDate;
         String date = endDate.substring(8,10);
         date = Integer.toString(Integer.parseInt(date)+4);
         endDate = endDate.substring(0,8)+date;
@@ -91,6 +92,32 @@ public class Data {
 
         return api.getList(requestURL);
     }
+
+//    public static Call<Results> getCurrency(String symbol) {
+//
+//        Data.symbol = symbol;
+//        Data.startDate = "yql?q=select%20*%20from%20yahoo.finance.xchange%20where%20pair%20in%20(%22";
+//        Data.endDate = "%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback=";
+//
+//        OkHttpClient client = new OkHttpClient.Builder()
+//                .build();
+//
+//        Gson gson = new GsonBuilder()
+//                .registerTypeAdapter(Results.class , new MyDeserializer())
+//                .create();
+//
+//        Retrofit retrofit = new Retrofit.Builder()
+//                .baseUrl("https://query.yahooapis.com/v1/public/")
+//                .client(client)
+//                .addConverterFactory(GsonConverterFactory.create(gson))
+//                .build();
+//
+//        API api = retrofit.create(API.class);
+//
+//        requestURL = startDate+symbol+endDate;
+//
+//        return api.getList(requestURL);
+//    }
 
 }
 

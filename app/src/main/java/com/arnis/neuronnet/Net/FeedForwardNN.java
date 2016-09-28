@@ -12,7 +12,6 @@ public class FeedForwardNN extends NeuronNet {
         setIteration(0);
         setCurrentTrainingSet(0);
         neuronLayers = new ArrayList<>();
-        results = new HashMap<>();
     }
 
 }

@@ -20,8 +20,6 @@ public class Brains {
     private Context context;
 
     Brains(Context context) {
-//        brainsStorage = context.getSharedPreferences("brains",Context.MODE_PRIVATE);
-//        dimenStorage = context.getSharedPreferences("dimen",Context.MODE_PRIVATE);
         this.context = context;
         matrices = new ArrayList<>();
     }
@@ -49,7 +47,7 @@ public class Brains {
 
     protected void saveBrains(String name,NeuronNet neuronNet){
         if (!name.equals("default")||!name.equals("no brains")) {
-            brainsStorage = context.getSharedPreferences(name, Context.MODE_PRIVATE);
+            brainsStorage = context.getSharedPreferences(name+"_brains", Context.MODE_PRIVATE);
             brainsStorage.edit().clear().apply();
             for (int i = 0; i < neuronNet.neuronLayers.size() - 1; i++) {
                 for (int j = 0; j < neuronNet.neuronLayers.get(i).size(); j++) {
@@ -75,7 +73,7 @@ public class Brains {
     }
 
     protected void loadBrains(String name,NeuronNet neuronNet){
-        brainsStorage = context.getSharedPreferences(name,Context.MODE_PRIVATE);
+        brainsStorage = context.getSharedPreferences(name+"_brains",Context.MODE_PRIVATE);
         if (matrices.size()==0) {
             matrices.add(new ArrayList<Double>());
             int i=0;

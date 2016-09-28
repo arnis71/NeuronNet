@@ -26,12 +26,9 @@ public interface Mode {
         @Override
         public void start(NeuronNet neuronNet) {
             Log.d("happy", "WORKING");
-            for (int i = 0; i < neuronNet.getTrainingSet().getSetEntries(); i++) {
-                neuronNet.loadValuesFromSet(i);
-                neuronNet.calculateInOut();
-                neuronNet.addResults(neuronNet.getOutput(),neuronNet.getTrainingSet().getEntry(i).getDescription());
-                neuronNet.getInfo();
-            }
+            neuronNet.loadValuesFromSet(0);
+            neuronNet.calculateInOut();
+            neuronNet.getInfo();
         }
     }
 }

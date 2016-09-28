@@ -1,5 +1,6 @@
 package com.arnis.neuronnet;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.support.v7.app.AlertDialog;
@@ -13,7 +14,19 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+import java.util.Collections;
 import java.util.Set;
+
+import static com.arnis.neuronnet.MainActivity.COMPLEX_ANALYSIS;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_BRAINS;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_ERROR;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_ITERATIONS;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_PREDICTION;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_PREFS;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_STOCKS_TYPE;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_TRAIN;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_TYPE;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_WINDOW;
 
 public class Settings extends AppCompatActivity {
 
@@ -30,16 +43,7 @@ public class Settings extends AppCompatActivity {
     private SharedPreferences prefs;
     private boolean isTrain;
     private boolean isComplex;
-    public static final String SETTINGS_PREFS = "settings";
-    public static final String SETTINGS_BRAINS = "brains_name";
-    public static final String SETTINGS_ERROR = "error";
-    public static final String SETTINGS_TYPE = "type";
-    public static final String SETTINGS_ITERATIONS = "iterations";
-    public static final String SETTINGS_TRAIN = "train";
-    public static final String SETTINGS_STOCKS_TYPE = "stock_type";
-    public static final String SETTINGS_WINDOW = "window";
-    public static final String SETTINGS_PREDICTION = "prediction";
-    public static final String COMPLEX_ANALYSIS = "complex";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,6 +131,17 @@ public class Settings extends AppCompatActivity {
                                         prefs.edit().putString(SETTINGS_BRAINS,strName).apply();
                                     }
                                 });
+                        builderInner.setNegativeButton("Delete", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                getSharedPreferences(MainActivity.BRAINS_STORAGE, Context.MODE_PRIVATE).edit().remove(strName).apply();
+                                getSharedPreferences(strName+"_info",Context.MODE_PRIVATE).edit().clear().apply();
+                                getSharedPreferences(strName+"_brains",Context.MODE_PRIVATE).edit().clear().apply();
+                                getSharedPreferences(strName+"_storage",Context.MODE_PRIVATE).edit().clear().apply();
+                                arrayAdapter.remove(strName);
+                                dialog.dismiss();
+                            }
+                        });
                         builderInner.show();
                     }
                 });

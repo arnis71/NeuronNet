@@ -14,6 +14,7 @@ import com.arnis.neuronnet.Other.OnCompleteListener;
 import com.arnis.neuronnet.Other.Prefs;
 import com.arnis.neuronnet.Other.TrainingSet;
 import com.arnis.neuronnet.Other.ValueChangeListener;
+import com.arnis.neuronnet.Retrofit.Currency;
 import com.arnis.neuronnet.Retrofit.Stock;
 
 import java.util.ArrayList;
@@ -52,7 +53,6 @@ public abstract class NeuronNet {
     private int maxIterations;
     private double err;
     ArrayList<ArrayList<Neural>> neuronLayers;
-    Map<String,double[]> results;
 
     private ValueChangeListener iterationListener;
 
@@ -60,7 +60,7 @@ public abstract class NeuronNet {
         iterationListener = listener;
     }
 
-    public void setName(String name){
+    void setName(String name){
         if (name.equals("no brains"))
             this.name = "default";
         else this.name = name;
@@ -135,6 +135,8 @@ public abstract class NeuronNet {
 
         net.loadBrains(prefs.getBrainName());
 
+        net.setName(prefs.getBrainName());
+
         return net;
     }
 
@@ -147,14 +149,25 @@ public abstract class NeuronNet {
 
         setTrainingSet(trainingSet);
     }
+    public void addCurrencyData(List<Currency> data){
+        TrainingSet trainingSet = new TrainingSet();
 
-    public void store(String name,Context context){
-        SharedPreferences.Editor editor = context.getSharedPreferences(name+"_info",Context.MODE_PRIVATE).edit();
-        editor.putInt("epoch",getEpoch());
-        editor.putString("error",Double.toString(getTotalError())).apply();
-        brains.saveBrains(name,this);
-        editor = context.getSharedPreferences(MainActivity.BRAINS_STORAGE,Context.MODE_PRIVATE).edit();
-        editor.putString(name,name).apply();
+        if (isTraining())
+            trainingSet.addTrainCurrency(data,neuronLayers.get(0).size()-1,neuronLayers.get(neuronLayers.size()-1).size());
+        else trainingSet.addWorkCurrency(data,neuronLayers.get(0).size()-1);
+
+        setTrainingSet(trainingSet);
+    }
+
+    void store(Context context){
+        if (!name.equals("default")) {
+            SharedPreferences.Editor editor = context.getSharedPreferences(name + "_info", Context.MODE_PRIVATE).edit();
+            editor.putInt("epoch", getEpoch());
+            editor.putString("error", Double.toString(getTotalError())).apply();
+            brains.saveBrains(name, this);
+            editor = context.getSharedPreferences(MainActivity.BRAINS_STORAGE, Context.MODE_PRIVATE).edit();
+            editor.putString(name, name).apply();
+        }
     }
 
     private void loadBrains(String name){
@@ -261,11 +274,13 @@ public abstract class NeuronNet {
                 public void run() {
                     getMode().start(copy);
                     brains.saveBrains(name, copy);
-                    mOnCompleteListener.onComplete();
+                    if (mOnCompleteListener!=null)
+                        mOnCompleteListener.onComplete();
                 }
             });
             neuralThread.start();
-        } else mOnCompleteListener.onComplete();
+        } else if (mOnCompleteListener!=null)
+            mOnCompleteListener.onComplete();
         return this;
     };
 
@@ -278,8 +293,8 @@ public abstract class NeuronNet {
                 Log.d("happy", "FOR INPUT: " + neural.getInputValue());
         }
         for (int i = 0; i < neuronLayers.get(neuronLayers.size()-1).size(); i++) {
-            Log.d("happy","IDEAL_OUTPUT: "+ ((OutputNeuron)neuronLayers.get(neuronLayers.size()-1).get(i)).getIdealOutputValue());
-            Log.d("happy","ACTUAL_OUTPUT: "+ String.format("%.4f",neuronLayers.get(neuronLayers.size()-1).get(i).getOutputValue()));
+//            Log.d("happy","IDEAL_OUTPUT: "+ ((OutputNeuron)neuronLayers.get(neuronLayers.size()-1).get(i)).getIdealOutputValue());
+            Log.d("happy","OUTPUT: "+ Double.toString(neuronLayers.get(neuronLayers.size()-1).get(i).getOutputValue()));
         }
         Log.d("happy", "-----------------------------------");
     }
@@ -338,7 +353,7 @@ public abstract class NeuronNet {
         this.trainingSet = trainingSet;
     }
 
-    double[] getOutput(){
+    public double[] getOutput(){
         double[] out = new double[neuronLayers.get(neuronLayers.size() - 1).size()];
         for (int i = 0; i < this.neuronLayers.get(neuronLayers.size() - 1).size(); i++) {
             out[i]=neuronLayers.get(neuronLayers.size()-1).get(i).getOutputValue();
@@ -351,20 +366,12 @@ public abstract class NeuronNet {
         return mode;
     }
 
-    private void setMode(String type) {
+    public void setMode(String type) {
         switch (type){
             case TRAINING_MODE: mode = new Mode.Learning(); this.setTrainingMode(BACKPROPAGATION_TRAINING);break;
             case VALIDATION_MODE: mode = new Mode.Validation();break;
             case WORKING_MODE: mode = new Mode.Working(); this.setTrainingMode("");break;
         }
-    }
-
-    public Map<String, double[]> getRawResults() {
-        return results;
-    }
-
-    void addResults(double[] res, String description) {
-        this.results.put(description,res);
     }
 
 

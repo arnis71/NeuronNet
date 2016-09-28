@@ -1,11 +1,9 @@
 package com.arnis.neuronnet.Other;
 
-import com.arnis.neuronnet.Retrofit.Data;
+import com.arnis.neuronnet.Retrofit.Currency;
 import com.arnis.neuronnet.Retrofit.Stock;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,6 +29,59 @@ public class TrainingSet {
 
     public Set getEntry(int index){
         return trainSet.get(index);
+    }
+    public void addTrainCurrency(List<Currency> currencies, int predictWindow, int prediction){
+        List<Double> percentage = new ArrayList<>();
+
+        double difference;
+        double res;
+
+        for (int i = 0; i < currencies.size() - 1; i++) {
+            difference = (currencies.get(i+1).average()-currencies.get(i).average());
+            res = difference/currencies.get(i).average();
+            if (res>1)
+                res=1;
+            percentage.add(res);
+        }
+
+        if (predictWindow+prediction<=percentage.size()) {
+
+            for (int i = 0; i <= percentage.size() - (predictWindow + prediction); i++) {
+                double[] window = new double[predictWindow];
+                double[] predict = new double[prediction];
+                int j;
+                for (j = 0; j < predictWindow; j++) {
+                    window[j] = percentage.get(i + j);
+                }
+                int k = 0;
+                for (; j < prediction + predictWindow; j++) {
+                    predict[k++] = percentage.get(i + j);
+                }
+                addEntry(new Set(window, predict));
+            }
+        }
+
+    }
+    public void addWorkCurrency(List<Currency> currencies, int predictWindow){
+        List<Double> percentage = new ArrayList<>();
+
+        double difference;
+        double res;
+        if (currencies.size()>predictWindow) {
+            for (int i = currencies.size() - predictWindow - 1; i < currencies.size() - 1; i++) {
+                difference = (currencies.get(i + 1).average()) - currencies.get(i).average();
+                res = difference / currencies.get(i).average();
+                if (res > 1)
+                    res = 1;
+                percentage.add(res);
+            }
+
+            double[] window = new double[predictWindow];
+            for (int j = 0; j < predictWindow; j++) {
+                window[j] = percentage.get(j);
+            }
+            addEntry(new Set(currencies.get(predictWindow).symbol, window));
+        }
     }
 
     public void addTrainStocks(List<Stock> stocks,int predictWindow,int prediction){
