@@ -17,6 +17,19 @@ public class Prefs {
     private int window;
     private int prediction;
 
+    public boolean isAnalyticsMode() {
+        return analyticsMode;
+    }
+
+    public void setAnalyticsMode(boolean analyticsMode) {
+        this.analyticsMode = analyticsMode;
+    }
+
+    private boolean analyticsMode;
+
+
+    private int floatWindow;
+
     public Prefs(String stockType, String brains,boolean complexity, boolean train, int iterations, int type, int error,int window,int prediction) {
         this.stockType = stockType;
         complex = complexity;
@@ -38,6 +51,13 @@ public class Prefs {
             default: this.error = null;break;
         }
     }
+    public int getFloatWindow() {
+        return floatWindow;
+    }
+
+    public void setFloatWindow(int floatWindow) {
+        this.floatWindow = floatWindow;
+    }
     public String getSymbol(){
         return stockType;
     }
@@ -48,7 +68,7 @@ public boolean isComplex(){
     public boolean isTrain() {
         return train;
     }
-    public String getBrainName() {
+    public String getNeuralName() {
         return brains;
     }
 

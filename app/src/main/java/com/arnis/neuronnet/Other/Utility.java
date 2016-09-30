@@ -1,10 +1,19 @@
 package com.arnis.neuronnet.Other;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.BounceInterpolator;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
+import android.widget.HorizontalScrollView;
+import android.widget.ListView;
 import android.widget.RemoteViews;
 
 import com.arnis.neuronnet.Retrofit.Currency;
@@ -84,4 +93,29 @@ public class Utility {
         }
         return currency;
     }
+
+    public static void animateScrollView(HorizontalScrollView scrollView){
+        ObjectAnimator animator=ObjectAnimator.ofInt(scrollView, "scrollX",HorizontalScrollView.FOCUS_RIGHT);
+        animator.setDuration(300);
+        animator.setInterpolator(new OvershootInterpolator());
+        animator.start();
+    }
+    public static void animateDrawerOut(View listView){
+        ObjectAnimator animator = ObjectAnimator.ofFloat(listView,View.TRANSLATION_X,-1440);
+        animator.setDuration(300).setInterpolator(new AccelerateInterpolator());
+        animator.start();
+    }
+    public static void animateDrawerIn(View listView){
+        ObjectAnimator animator = ObjectAnimator.ofFloat(listView,View.TRANSLATION_X,0);
+        animator.setDuration(300).setInterpolator(new DecelerateInterpolator());
+        animator.start();
+    }
+    public static void animateDrawerPop(View listView){
+        ObjectAnimator animator = ObjectAnimator.ofFloat(listView,View.TRANSLATION_X,-1200);
+        animator.setDuration(1000).setInterpolator(new BounceInterpolator());
+        animator.setRepeatCount(1);
+        animator.setRepeatMode(ValueAnimator.REVERSE);
+        animator.start();
+    }
+
 }

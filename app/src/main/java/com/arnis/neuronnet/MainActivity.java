@@ -17,9 +17,14 @@ public class MainActivity extends AppCompatActivity {
     public static final String SETTINGS_STOCKS_TYPE = "stock_type";
     public static final String SETTINGS_WINDOW = "window";
     public static final String SETTINGS_PREDICTION = "prediction";
+    public static final String SETTINGS_FLOATING_WINDOW = "floatwindow";
+    public static final String SETTINGS_MOMENTUM = "momentum";
+    public static final String SETTINGS_LEARNRATE = "learnrate";
+    public static final String SETTINGS_ANALYTICS_MODE = "analmode";
     public static final String COMPLEX_ANALYSIS = "complex";
 
 
+    public static final String SETTINGS_VIEW = "setview";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

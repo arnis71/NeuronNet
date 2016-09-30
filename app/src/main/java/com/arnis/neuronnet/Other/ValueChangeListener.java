@@ -11,8 +11,8 @@ import java.util.List;
 
 public interface ValueChangeListener {
     void onValueChange(double value);
+    void onValueChange(String value);
     void onValueChange(double ask,double bid);
-    void onPositionOpen(double at,String direction,double amount);
     void onValueChange(ArrayList<Double> values);
     //ArrayList<List<Entry>> values for complex
 }

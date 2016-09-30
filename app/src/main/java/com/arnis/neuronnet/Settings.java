@@ -17,14 +17,19 @@ import android.widget.Spinner;
 import java.util.Set;
 
 import static com.arnis.neuronnet.MainActivity.COMPLEX_ANALYSIS;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_ANALYTICS_MODE;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_BRAINS;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_ERROR;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_FLOATING_WINDOW;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_ITERATIONS;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_LEARNRATE;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_MOMENTUM;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_PREDICTION;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_PREFS;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_STOCKS_TYPE;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_TRAIN;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_TYPE;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_VIEW;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_WINDOW;
 
 public class Settings extends AppCompatActivity {
@@ -43,6 +48,13 @@ public class Settings extends AppCompatActivity {
     private boolean isTrain;
     private boolean isComplex;
 
+    private String viewType;
+    private EditText momentum;
+    private EditText learning;
+    private EditText floatPredict;
+    private CheckBox analytics;
+    private boolean anal;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +70,13 @@ public class Settings extends AppCompatActivity {
         complex = (CheckBox)findViewById(R.id.complex);
         window = (EditText)findViewById(R.id.window);
         prediction = (EditText)findViewById(R.id.prediction);
-//        momentum = (EditText)findViewById(R.id.momentum);
-//        learning = (EditText)findViewById(R.id.learning_rate);
+        momentum = (EditText)findViewById(R.id.momentum);
+        learning = (EditText)findViewById(R.id.learning_rate);
+        floatPredict = (EditText)findViewById(R.id.float_predict);
+        analytics = (CheckBox)findViewById(R.id.analytics_mode);
+
+
+        adjustView();
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.types, android.R.layout.simple_spinner_item);
@@ -89,8 +106,26 @@ public class Settings extends AppCompatActivity {
                 isComplex = isChecked;
             }
         });
+        analytics.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                anal = isChecked;
+            }
+        });
 
 
+    }
+
+    private void adjustView(){
+        Bundle b  = getIntent().getExtras();
+        if (b!=null){
+            viewType = b.getString(SETTINGS_VIEW);
+        }
+        if (viewType!=null){
+            stockType.setHint("name");
+            floatPredict.setVisibility(View.VISIBLE);
+            analytics.setVisibility(View.VISIBLE);
+        }
     }
 
     private void showDialog() {
@@ -162,6 +197,13 @@ public class Settings extends AppCompatActivity {
 
     private void saveSettings(){
         SharedPreferences.Editor edit = prefs.edit();
+        if (floatPredict.getVisibility()==View.VISIBLE)
+            edit.putInt(SETTINGS_FLOATING_WINDOW,Integer.parseInt(floatPredict.getText().toString()));
+        if (analytics.getVisibility()==View.VISIBLE){
+            edit.putBoolean(SETTINGS_ANALYTICS_MODE,anal);
+        }
+        edit.putString(SETTINGS_MOMENTUM,momentum.getText().toString());
+        edit.putString(SETTINGS_LEARNRATE,learning.getText().toString());
         edit.putBoolean(COMPLEX_ANALYSIS,isComplex);
         edit.putBoolean(SETTINGS_TRAIN,isTrain);
         edit.putInt(SETTINGS_ERROR,error.getSelectedItemPosition());
@@ -181,6 +223,8 @@ public class Settings extends AppCompatActivity {
         edit.apply();
     }
     private void loadSettings(){
+        learning.setText(prefs.getString(SETTINGS_LEARNRATE,"0.0001"));
+        momentum.setText(prefs.getString(SETTINGS_MOMENTUM,"0.9"));
         complex.setChecked(prefs.getBoolean(COMPLEX_ANALYSIS,false));
         train.setChecked(prefs.getBoolean(SETTINGS_TRAIN,false));
         iter.setText(Integer.toString(prefs.getInt(SETTINGS_ITERATIONS,5000)));
@@ -189,11 +233,15 @@ public class Settings extends AppCompatActivity {
         stockType.setText(prefs.getString(SETTINGS_STOCKS_TYPE,"AAPL"));
         window.setText(Integer.toString(prefs.getInt(SETTINGS_WINDOW,2)));
         prediction.setText(Integer.toString(prefs.getInt(SETTINGS_PREDICTION,1)));
+        if (floatPredict.getVisibility() == View.VISIBLE)
+            floatPredict.setText(Integer.toString(prefs.getInt(SETTINGS_FLOATING_WINDOW,50)));
+        if (analytics.getVisibility()==View.VISIBLE){
+            analytics.setChecked(prefs.getBoolean(SETTINGS_ANALYTICS_MODE,true));
+        }
     }
     @Override
     public void finish() {
         super.finish();
-        // кастомная анимация
         overridePendingTransition(R.anim.slide_in_right,R.anim.slide_out_right);
     }
 }

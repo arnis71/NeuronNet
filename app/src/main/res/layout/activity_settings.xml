@@ -9,7 +9,7 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:gravity="center"
-    tools:context="com.arnis.neuronnet.Settings"
+    tools:activity="com.arnis.neuronnet.Settings"
     android:orientation="vertical">
 
     <CheckBox
@@ -23,6 +23,12 @@
         android:layout_height="wrap_content"
         android:text="train"
         android:id="@+id/train_nn"/>
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="analytics mode"
+        android:id="@+id/analytics_mode"
+        android:visibility="gone"/>
     <Button
         android:id="@+id/load_brains"
         android:layout_width="wrap_content"
@@ -42,6 +48,13 @@
         android:id="@+id/enn_type"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"></Spinner>
+    <EditText
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/float_predict"
+        android:hint="analyt window"
+        android:inputType="number"
+        android:visibility="gone"/>
     <EditText
         android:layout_width="100dp"
         android:layout_height="wrap_content"
@@ -65,12 +78,12 @@
         android:layout_height="wrap_content"
         android:id="@+id/momentum"
         android:hint="momentum"
-        android:inputType="number"/>
+        android:inputType="numberDecimal"/>
     <EditText
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:id="@+id/learning_rate"
         android:hint="learning rate"
-        android:inputType="number"/>
+        android:inputType="numberDecimal"/>
 
 </LinearLayout>

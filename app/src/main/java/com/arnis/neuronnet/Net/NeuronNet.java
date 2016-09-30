@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.arnis.neuronnet.MainActivity;
-import com.arnis.neuronnet.StockPrediction;
 import com.arnis.neuronnet.Neurons.InputNeuron;
 import com.arnis.neuronnet.Neurons.Neural;
 import com.arnis.neuronnet.Neurons.OutputNeuron;
@@ -24,7 +23,7 @@ import java.util.List;
 /**
  * Created by arnis on 04.09.2016.
  */
-public abstract class NeuronNet {
+public abstract class NeuronNet implements Cloneable {
     public static final String FEEDFORWARD_NN = "feedforward";
     public static final String ELMAN_NN = "elman";
     public static final String JORDAN_NN = "jordan";
@@ -35,7 +34,6 @@ public abstract class NeuronNet {
     public static final String TRAINING_MODE = "training";
     public static final String VALIDATION_MODE = "validation";
     public static final String WORKING_MODE = "working";
-    public static final String STOCK_PREDICT = "stocks";
 
     private static double learningRate = 0.0001;
     private static double momentum = 0.9;
@@ -112,7 +110,7 @@ public abstract class NeuronNet {
 
     public static NeuronNet requestStockSolvingNN(Context context, Prefs prefs){
 
-        int[] hiddenNeurons = new int[]{3};
+        int[] hiddenNeurons = new int[]{5,5};
 
         NetDimen dimensions = new NetDimen(prefs.getWindow(),prefs.getPrediction(),hiddenNeurons);
 
@@ -126,16 +124,16 @@ public abstract class NeuronNet {
         NeuronNet net = builder.build();
         net.setMaxIterations(prefs.getIterations());
 
-        net.epoch = context.getSharedPreferences(prefs.getBrainName()+"_info",Context.MODE_PRIVATE).getInt("epoch",0);
-        net.err = Double.parseDouble(context.getSharedPreferences(prefs.getBrainName()+"_info",Context.MODE_PRIVATE).getString("error","0"));
+        net.epoch = context.getSharedPreferences(prefs.getNeuralName()+"_info",Context.MODE_PRIVATE).getInt("epoch",0);
+        net.err = Double.parseDouble(context.getSharedPreferences(prefs.getNeuralName()+"_info",Context.MODE_PRIVATE).getString("error","0"));
 
         if (prefs.isTrain())
             net.setMode(TRAINING_MODE);
         else net.setMode(WORKING_MODE);
 
-        net.loadBrains(prefs.getBrainName());
+        net.loadBrains(prefs.getNeuralName());
 
-        net.setName(prefs.getBrainName());
+        net.setName(prefs.getNeuralName());
 
         return net;
     }
@@ -374,6 +372,12 @@ public abstract class NeuronNet {
         }
     }
 
+    @Override
+    protected NeuronNet clone() throws CloneNotSupportedException {
+        NeuronNet clone = (NeuronNet) super.clone();
+        clone.neuronLayers = (ArrayList<ArrayList<Neural>>) this.neuronLayers.clone();
+        return clone;
+    }
 
     public static class Builder{
         private NeuronNet net;

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="10dp">
+    <RelativeLayout
+        android:background="#cfd8dc"
+        android:id="@+id/tab"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:id="@+id/position_bar">
+            <TextView
+                android:textColor="#424242"
+                android:textStyle="bold"
+                android:padding="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Position" />
+            <TextView
+                android:padding="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/position_open"/>
+            <TextView
+                android:textColor="#424242"
+                android:textStyle="bold"
+                android:padding="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Amount" />
+            <TextView
+                android:padding="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/position_amount"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/position_bar"
+            android:id="@+id/timer_bar">
+            <TextView
+                android:textColor="#424242"
+                android:textStyle="bold"
+                android:padding="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Direction" />
+            <TextView
+                android:textAllCaps="true"
+                android:padding="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/position_direction"/>
+            <TextView
+                android:textColor="#424242"
+                android:textStyle="bold"
+                android:padding="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Time left"/>
+            <TextView
+                android:padding="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/timer"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+</RelativeLayout>

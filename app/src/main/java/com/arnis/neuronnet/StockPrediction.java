@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.arnis.neuronnet.Net.NeuralHelper;
+import com.arnis.neuronnet.Net.NeuronNet;
 import com.arnis.neuronnet.Other.Prefs;
 import com.arnis.neuronnet.Retrofit.Data;
 import com.arnis.neuronnet.Retrofit.Results;
@@ -35,6 +36,8 @@ import static com.arnis.neuronnet.MainActivity.COMPLEX_ANALYSIS;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_BRAINS;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_ERROR;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_ITERATIONS;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_LEARNRATE;
+import static com.arnis.neuronnet.MainActivity.SETTINGS_MOMENTUM;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_PREDICTION;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_PREFS;
 import static com.arnis.neuronnet.MainActivity.SETTINGS_STOCKS_TYPE;
@@ -111,10 +114,13 @@ public class StockPrediction extends AppCompatActivity {
                 preferences.getInt(SETTINGS_WINDOW, 2),
                 preferences.getInt(SETTINGS_PREDICTION, 1));
 
+        NeuronNet.setLearningRate(Double.parseDouble(preferences.getString(SETTINGS_LEARNRATE,"0.0001")));
+        NeuronNet.setMomentum(Double.parseDouble(preferences.getString(SETTINGS_MOMENTUM,"0.9")));
+
     }
 
     private void applyInfo() {
-        currentBrain.setText(mainPrefs.getBrainName());
+        currentBrain.setText(mainPrefs.getNeuralName());
         currentStock.setText(mainPrefs.getSymbol());
     }
 

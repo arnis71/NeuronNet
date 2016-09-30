@@ -4,27 +4,37 @@
     android:id="@+id/activity_currencyprediction"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.arnis.neuronnet.CurrencyPrediction">
-
+    tools:activity="com.arnis.neuronnet.CurrencyPrediction">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <ProgressBar
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            style="@android:style/Widget.Holo.ProgressBar.Horizontal"
-            android:id="@+id/pb"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_menu"
+                android:clickable="true"
+                android:onClick="openDrawer"/>
             <Button
                 android:text="start"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/start_trading" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="save brains"
+                android:onClick="saveBrains"/>
+            <Button
+                android:id="@+id/delete_data"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="delete"/>
             <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -38,86 +48,65 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:textColor="#424242"
+                    android:textStyle="bold"
+                    android:padding="3dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Balance"/>
+                <TextView
+                    android:padding="3dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/balance"/>
+            </LinearLayout>
             <com.github.mikephil.charting.charts.LineChart
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:id="@+id/money_stats"
-                android:layout_weight="1.2"/>
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:id="@+id/position_bar">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Opened position" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="63.22"
-                        android:id="@+id/position_open"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Direction" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="up"
-                        android:id="@+id/position_direction"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Amount" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="up"
-                        android:id="@+id/position_amount"/>
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/position_bar"
-                    android:id="@+id/timer_bar">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="time left"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="10 seconds"
-                        android:id="@+id/timer"/>
-                </LinearLayout>
-                <HorizontalScrollView
-                    android:layout_below="@id/timer_bar"
-                    android:layout_width="match_parent"
-                    android:layout_height="70dp">
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:id="@+id/signals_scroller"
-                        android:orientation="horizontal">
+                android:layout_height="80dp"
+                android:id="@+id/money_chart">
 
-                    </LinearLayout>
-                </HorizontalScrollView>
-            </RelativeLayout>
+            </com.github.mikephil.charting.charts.LineChart>
+            <TextView
+                android:textColor="#424242"
+                android:textStyle="bold"
+                android:padding="3dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Signals"/>
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:id="@+id/scroller">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/signals_scroller"
+                    android:orientation="horizontal">
+
+                </LinearLayout>
+            </HorizontalScrollView>
+            <ProgressBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@android:style/Widget.Holo.ProgressBar.Horizontal"
+                android:id="@+id/pb"/>
             <com.github.mikephil.charting.charts.LineChart
-                android:layout_weight="0.5"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:id="@+id/rates"/>
+                android:id="@+id/rates" />
         </LinearLayout>
-
-
-
-
     </LinearLayout>
 
+    <ListView
+        android:clickable="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/positions_list"
+        android:divider="@android:color/transparent"></ListView>
 
 </RelativeLayout>

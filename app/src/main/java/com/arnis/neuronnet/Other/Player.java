@@ -24,15 +24,11 @@ public class Player {
     private NeuralHelper helper;
     private ArrayList<Currency> chart;
     private double money;
-    double openedPosition;
-    double amount;
-    String decision;
+    private double buyRate;
     private Context context;
-    private ValueChangeListener moneyChange;
-    public void setMoneyChangeListener(ValueChangeListener listener){
-        moneyChange = listener;
-    }
     private ValueChangeListener rateChange;
+    private boolean analyticsMode;
+
     public void setRateChangeListener(ValueChangeListener listener){
         rateChange = listener;
     }
@@ -41,7 +37,7 @@ public class Player {
         predictionChange = listener;
     }
     private ValueChangeListener positionOpened;
-    public void setPositionOpenedListener(ValueChangeListener listener){
+    public void setPositionChangeListener(ValueChangeListener listener){
         positionOpened = listener;
     }
     private ValueChangeListener signal;
@@ -52,6 +48,8 @@ public class Player {
     String direction;
     boolean canPredict;
     boolean canTrain;
+    boolean active;
+    boolean canBuy;
 
 
     public Player(Context context, NeuralHelper helper) {
@@ -59,19 +57,19 @@ public class Player {
         chart = new ArrayList<>();
         money = 100;//dollars
         this.context = context;
-        openedPosition =0;
-        decision="";
-        amount=0;
-        canPredict=false;
+        buyRate = 0.1;
+        canPredict=true;
         canTrain=true;
+        active=false;
+        canBuy=true;
     }
 
 
 
 
     public void play(){
+        active=true;
         loadData();
-        moneyChange.onValueChange(money);
         if (chart.size()>0){
             for (int i = 0; i < chart.size(); i++) {
                 rateChange.onValueChange(chart.get(i).ask,chart.get(i).bid);
@@ -80,13 +78,14 @@ public class Player {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                training();
-                while (true){
+                if (helper.isTraining())
+                    initiateTraining();
+                while (active){
                     try {
                         String result = Utility.getPage("http://www.forexpf.ru/currency_usd.asp");
                         Currency currency = Utility.getUSDRUB(result);
                         if (currency!=null){
-                            chart.add(currency);
+                            addCurrencyToChart(currency);
                             rateChange.onValueChange(currency.ask,currency.bid);
                             saveData(currency);
                             Log.d(TAG, "new entry "+String.format("%.4f",chart.get(chart.size()-1).average()) +" total: "+Integer.toString(chart.size())+" entries");
@@ -97,8 +96,23 @@ public class Player {
                         e.printStackTrace();
                     }
                 }
+                helper.storeData();
             }
         }).start();
+    }
+
+    public void stop(){
+        active=false;
+    }
+
+    private void addCurrencyToChart(Currency currency){
+        if (chart.size()>helper.getFloatingWindow()) {
+            for (int i = chart.size()-1; i > helper.getFloatingWindow()-2; i--) {
+                chart.remove(0);
+            }
+        }
+        Position.ask = currency.ask;
+        chart.add(currency);
     }
 
     private void saveData(Currency currency) {
@@ -136,6 +150,16 @@ public class Player {
             Log.e(TAG, "Can not read file: " + e.toString());
         }
     }
+    public void deleteData(){
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("currency.txt", Context.MODE_PRIVATE));
+            outputStreamWriter.append("");
+            outputStreamWriter.close();
+//            Log.d(TAG, "data deleted");
+        }
+        catch (IOException e) {
+        }
+    }
 
     private Currency lineToCurrency(String[] string){
         Currency currency = new Currency();
@@ -144,23 +168,14 @@ public class Player {
         currency.bid = Double.parseDouble(string[2]);
         return currency;
     }
-    private int trimTime(String time){
-        time = time.replaceAll(":","");
-        return Integer.parseInt(time);
-    }
-    private String toTime(int time){
-        String res = Integer.toString(time);
-        res = res.substring(0,2)+":"+res.substring(2,4);
-        return res;
-    }
 
-    private void training(){
+    private void initiateTraining(){
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    while (true) {
+                    while (active) {
                         if (canTrain&&chart.size()>10) {
-                            Log.d(TAG, "training...");
+                            Log.d(TAG, "initiateTraining...");
                             helper.setMode(NeuronNet.TRAINING_MODE);
                             helper.addCurrencyData(chart);
                             canPredict = false;
@@ -202,7 +217,6 @@ public class Player {
             }
 
             predictionChange.onValueChange(results);
-            signal.onValueChange(results);
 
             for (int i=0;i<results.size()-1;i++) {
                 if (results.get(i) < results.get(i+1) && (direction == null || !direction.equals("down"))) {
@@ -212,68 +226,41 @@ public class Player {
                 } else {
                     Log.d(TAG, "uncertain prediction");
                     direction = "";
-//                    sell(false);
+                    signal.onValueChange(direction);
                     return;
                 }
                 buy();
-//                if (!decision.equals("") && !direction.equals("") && !direction.equals(decision))
-//                    sell(false);
             }
-
-            Log.d(TAG, "prediction " + direction.toUpperCase() + " from " +
-                    String.format("%.4f", chart.get(chart.size() - 1).average()) + " to " + String.format("%.4f", average(results)));
+            signal.onValueChange(direction);
         }
     }
 
     private void buy(){
-        if (openedPosition==0&&chart.size()>20){
-            openedPosition = chart.get(chart.size()-1).ask;
-            decision=direction;
-            amount = (money*0.05);
-            positionOpened.onPositionOpen(openedPosition,decision,amount);
-            Log.d("happytechcheck", "POSITION OPENED at "+ String.format("%.4f",openedPosition)+ ", decision - "+ decision);
+        if (!analyticsMode&&canBuy&&chart.size()>20){
+            canBuy=false;
+            final int id = new Position().setAction(Position.BUY).setInfo(chart.get(chart.size()-1).ask,direction,money*buyRate);
+            Log.d(TAG, "buying "+ Integer.toString(id));
+            positionOpened.onValueChange(id,money);
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        Log.d("happytechcheck", "30 sec to sell manually");
-                        Thread.sleep(30000);
-                        Log.d("happytechcheck", "Time is up, order close in 30 sec");
-                        Thread.sleep(30000);
-                        sell();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    Position.getPositionById(id).join();
+                    sell(id);
+                    canBuy=true;
                 }
             }).start();
         }
-
     }
-    private void sell(){
-        if (openedPosition!=0) {
-            double result = chart.get(chart.size() - 1).ask - openedPosition;
-            if (result > 0 && decision.equals("up")) {
-                result = amount*0.7;
-                money += result;
-                moneyChange.onValueChange(money);
-                Log.d("happytechcheck", "SUCCESS, earned " + String.format("%.2f",result) + "$");
-            } else if (result < 0 && decision.equals("down")) {
-                result = amount+(amount*-0.7);
-                money += result;
-                moneyChange.onValueChange(money);
-                Log.d("happytechcheck", "SUCCESS, earned " + String.format("%.2f",result) + "$");
-            } else if (result==0) {
-                Log.d("happytechcheck", "DRAW, funds returned");
-            } else {
-                money -= amount;
-                moneyChange.onValueChange(money);
-                Log.d("happytechcheck", "FAIL, lost " + String.format("%.1f",amount) + "$");
-            }
-            Log.d("happytechcheck", "POSITION CLOSED at " + String.format("%.4f",chart.get(chart.size() - 1).ask) + ", current money " + String.format("%.2f",money)+"$");
-            decision = "";
-            openedPosition = 0;
+    private void sell(int id){
+        Position position = Position.getPositionById(id);
+        if (position!=null) {
+            Log.d(TAG, "selling "+ Integer.toString(id));
+            money += position.getResult(chart.get(chart.size() - 1).ask);
+            position.setAction(Position.SELL);
+            positionOpened.onValueChange(id,money);
         }
     }
+
 
 
     private double average(ArrayList<Double> arr){
@@ -300,5 +287,13 @@ public class Player {
             sch=0;
         }
         return fin;
+    }
+
+    public void newHelper(NeuralHelper helper) {
+        this.helper = helper;
+    }
+
+    public void setMode(boolean analyticsMode) {
+        this.analyticsMode = analyticsMode;
     }
 }

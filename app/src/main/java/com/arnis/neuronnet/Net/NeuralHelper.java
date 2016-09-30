@@ -26,14 +26,16 @@ public class NeuralHelper {
     private int[] predictionSet;
     private String[] nameSet;
     private int[] colorSet;
-
+    int floatingWindow;
 
     private Activity activity;
     private List<NeuronNet> nets;
+//    private List<NeuronNet> clones;
 
     public NeuralHelper(Activity activity) {
         this.activity = activity;
         nets = new ArrayList<>();
+//        clones = new ArrayList<>();
         complexNets = 5;
         windowSet = new int[]{2,4,7,10,14};
         predictionSet = new int[]{1,2,2,3,3};
@@ -57,15 +59,44 @@ public class NeuralHelper {
         }
     }
     public void run(){
-        for (final NeuronNet net:nets) {
-            net.startWithListener(null);
-        }
+//        if (isTraining()){
+//            makeClones();
+//            for (final NeuronNet net:clones) {
+//                net.startWithListener(null);
+//            }
+//            joinClones();
+//            mergeClones();
+//        } else
+            for (final NeuronNet net:nets)
+                net.startWithListener(null);
+
     }
+
+
+//    private void makeClones(){
+//        for (NeuronNet net:nets)
+//            try {
+//                clones.add((NeuronNet) net.clone());
+//            } catch (CloneNotSupportedException e) {
+//                e.printStackTrace();
+//            }
+//    }
+//    private void mergeClones(){
+//        nets.clear();
+//        for (NeuronNet net:clones)
+//            nets.add(net);
+//        clones.clear();
+//    }
 
     public void join(){
         for (NeuronNet net:nets)
             net.join();
     }
+//    private void joinClones(){
+//        for (NeuronNet net:clones)
+//            net.join();
+//    }
+
     public void addStockData(List<Stock> stocks){
         for (NeuronNet net:nets){
                 net.addStockData(stocks);
@@ -131,7 +162,9 @@ public class NeuralHelper {
     }
 
     public void addNets(Prefs prefs){
+
         NeuronNet net;
+        nets.clear();
         if (prefs.isComplex()){
             for (int i = 0; i < complexNets; i++) {
                 prefs.setName(prefs.getSymbol()+nameSet[i]);
@@ -163,15 +196,17 @@ public class NeuralHelper {
                     });
 
                 }
+
+                @Override
+                public void onValueChange(String value) {
+
+                }
+
                 @Override
                 public void onValueChange(double ask, double bid) {
 
                 }
 
-                @Override
-                public void onPositionOpen(double at, String direction, double amount) {
-
-                }
 
                 @Override
                 public void onValueChange(ArrayList<Double> values) {
@@ -191,13 +226,14 @@ public class NeuralHelper {
                     });
 
                 }
+
                 @Override
-                public void onValueChange(double ask, double bid) {
+                public void onValueChange(String value) {
 
                 }
 
                 @Override
-                public void onPositionOpen(double at, String direction, double amount) {
+                public void onValueChange(double ask, double bid) {
 
                 }
 
@@ -234,4 +270,11 @@ public class NeuralHelper {
         for (NeuronNet net:nets)
             net.setMode(trainingMode);
     }
+    public void setFloatingWindow(int value){
+        this.floatingWindow = value;
+    }
+    public int getFloatingWindow(){
+        return floatingWindow;
+    }
+
 }
