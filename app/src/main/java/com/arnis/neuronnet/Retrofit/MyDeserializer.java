@@ -17,6 +17,10 @@ public class MyDeserializer implements JsonDeserializer<Results> {
     public Results deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         JsonElement content = json.getAsJsonObject().get("query").getAsJsonObject().get("results");
 
-        return  new Gson().fromJson(content, Results.class);
+        try {
+            return  new Gson().fromJson(content, Results.class);
+        } catch (Exception e){
+            return null;
+        }
     }
 }

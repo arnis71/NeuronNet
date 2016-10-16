@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -101,6 +102,12 @@ public class StockPrediction extends AppCompatActivity {
         helper.storeData();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Data.clear();
+    }
+
     private void loadSettings() {
         SharedPreferences preferences = getSharedPreferences(SETTINGS_PREFS, MODE_PRIVATE);
 
@@ -149,16 +156,39 @@ public class StockPrediction extends AppCompatActivity {
                     helper.run(error);
                     if (!helper.isTraining()){
                         body = Data.checkStock().execute().body();
-                        checkStocks = body.quote;
-                        Collections.reverse(checkStocks);
-                        helper.join();
-                        runOnUiThread(new Runnable() {
+                        if (body!=null){
+                            checkStocks = body.quote;
+                            Collections.reverse(checkStocks);
+                            helper.join();
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (stocks!=null)
+                                        updateChart(helper.stockPredictionsToChart(stocks));
+                                    else Toast.makeText(StockPrediction.this, "ERROR stocks dissapeared", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        } else {
+                            runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                updateChart(helper.stockPredictionsToChart(stocks));}});
+                                Toast.makeText(StockPrediction.this, "No check stocks avaliable", Toast.LENGTH_SHORT).show();
+                                if (stocks!=null)
+                                    updateChart(helper.stockPredictionsToChart(stocks));
+                                else Toast.makeText(StockPrediction.this, "ERROR stocks dissapeared", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        }
+
+
                     }else helper.join();
                 } catch (IOException e) {
                     e.printStackTrace();
+                    runOnUiThread(new Runnable() {
+                                      @Override
+                                      public void run() {
+                                          Toast.makeText(StockPrediction.this, "ERROR loading", Toast.LENGTH_SHORT).show();
+                                      }});
                 }
 
 
@@ -166,7 +196,7 @@ public class StockPrediction extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(StockPrediction.this, "Computation completed", Toast.LENGTH_LONG).show();
+//                        Toast.makeText(StockPrediction.this, "Computation completed", Toast.LENGTH_LONG).show();
                         view.setClickable(true);
                         view.setBackgroundColor(Color.GREEN);
                     }
@@ -200,7 +230,9 @@ public class StockPrediction extends AppCompatActivity {
         if (checkStocks!=null&&checkStocks.size()>0){
             for (Stock stock : checkStocks) {
                 realData.add(new Entry((float) dataSch++, (float) stock.average()));
+                Log.d("error", "updateChart: ");
             }
+            checkStocks.clear();
         }
         if (entries!=null){
             for (int i=0;i<entries.size();i++) {

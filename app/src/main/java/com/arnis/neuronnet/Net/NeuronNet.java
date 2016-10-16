@@ -266,7 +266,7 @@ public abstract class NeuronNet implements Cloneable {
     public NeuronNet startWithListener(OnCompleteListener listener){
         final NeuronNet copy = this;
         mOnCompleteListener = listener;
-        if (getTrainingSet().getSetEntries()>0) {
+        if (getTrainingSet()!=null&&getTrainingSet().getSetEntries()>0) {
             neuralThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
